@@ -1,0 +1,17 @@
+{
+  "name": "Rocks Hero · Set List",
+  "short_name": "Rocks Hero",
+  "description": "Quanto cada membro da banda já tirou das músicas dos Guitar Hero e o set list do show.",
+  "lang": "pt-BR",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0b0a0f",
+  "theme_color": "#0b0a0f",
+  "icons": [
+    { "src": "assets/logo/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "assets/logo/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "assets/logo/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

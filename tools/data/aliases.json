@@ -1,0 +1,53 @@
+{
+  "_doc": "fix: corrige campos de uma entrada (casada por jogo + título extraído) antes de gerar o id. merge: une ids. songYear: ano da gravação original quando o jogo usa regravação ou versão ao vivo.",
+  "fix": [
+    {
+      "game": "gh80",
+      "title": "Ain't Nothin' But a Good Time",
+      "set": {
+        "title": "Nothin' but a Good Time",
+        "gameTitle": "Ain't Nothin' But a Good Time"
+      }
+    },
+    {
+      "game": "ghwor",
+      "title": "Paranoid",
+      "set": {
+        "artist": "Black Sabbath",
+        "version": "Live, Metallica & Ozzy Osbourne"
+      }
+    },
+    {
+      "game": "ghwt",
+      "title": "Kick Out the Jams",
+      "set": {
+        "artist": "MC5",
+        "version": "regravação de Wayne Kramer"
+      }
+    }
+  ],
+  "merge": {},
+  "songYear": {
+    "sex-pistols--anarchy-in-the-uk": 1976,
+    "sex-pistols--pretty-vacant": 1977,
+    "living-colour--cult-of-personality": 1988,
+    "the-charlie-daniels-band--the-devil-went-down-to-georgia": 1979,
+    "mercyful-fate--evil": 1983,
+    "mc5--kick-out-the-jams": 1969,
+    "motorhead--overkill": 1979,
+    "deep-purple--woman-from-tokyo": 1973,
+    "nirvana--about-a-girl": 1989,
+    "nirvana--lithium": 1991,
+    "the-jimi-hendrix-experience--purple-haze": 1967,
+    "lynyrd-skynyrd--sweet-home-alabama": 1974,
+    "social-distortion--mommys-little-monster": 1983,
+    "bob-seger-and-the-silver-bullet-band--turn-the-page": 1973,
+    "peter-frampton--do-you-feel-like-we-do": 1973,
+    "iggy-pop--lust-for-life": 1977,
+    "santana--no-one-to-depend-on": 1971,
+    "jeff-beck--scatterbrain": 1975,
+    "cheap-trick--i-want-you-to-want-me": 1977,
+    "bad-brains--re-ignition": 1983,
+    "sting--demolition-man": 1993
+  }
+}

@@ -1,0 +1,211 @@
+/* Rocks Hero — tokens, reset e tipografia (identidade inspirada nos Guitar Hero clássicos). */
+
+:root {
+  color-scheme: dark;
+
+  /* Palco */
+  --bg: #0b0a0f;
+  --bg-2: #120f17;
+  --panel: #1a1621;
+  --panel-2: #231d2b;
+  --panel-3: #2d2637;
+  --line: #3b3347;
+  --line-soft: rgba(255, 255, 255, 0.08);
+  --text: #f6f0e6;
+  --text-dim: #c3b9cf;
+  --text-faint: #8d839b;
+
+  /* Gemas das 5 casas */
+  --gem-green: #1fd14a;
+  --gem-red: #ff2b2b;
+  --gem-yellow: #ffd400;
+  --gem-blue: #2f86ff;
+  --gem-orange: #ff8a00;
+
+  /* Rock meter */
+  --meter-red: #ef3b2d;
+  --meter-yellow: #ffc81f;
+  --meter-green: #3fd35a;
+  --meter-none: #5d5569;
+
+  --star: #ffd23f;
+  --gold: #f2b705;
+  --star-power: #3fd8ff;
+
+  --fire: linear-gradient(180deg, #fffbd1 0%, #ffe14d 22%, #ff8f00 55%, #e3200f 85%, #8e0a06 100%);
+  --fire-h: linear-gradient(90deg, #e3200f 0%, #ff8f00 45%, #ffd63a 100%);
+  --chrome: linear-gradient(180deg, #ffffff 0%, #c3ccd6 38%, #4f5b69 50%, #e9eef4 62%, #8e9aa8 100%);
+  --chrome-edge: linear-gradient(180deg, #f4f7fb, #8e9aa8 45%, #3e4854 55%, #cfd6de);
+  --metal: linear-gradient(180deg, #3a3444 0%, #241f2c 47%, #19151f 53%, #2b2533 100%);
+  --metal-hover: linear-gradient(180deg, #4a4256 0%, #2f2939 47%, #221d2a 53%, #373043 100%);
+
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-lg: 16px;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  --shadow-sm: 0 3px 10px rgba(0, 0, 0, 0.4);
+
+  --font-display: 'Metal Mania', Impact, 'Arial Black', fantasy;
+  --font-ui: 'Oswald', 'Arial Narrow', 'Roboto Condensed', system-ui, sans-serif;
+  --font-hand: 'Permanent Marker', 'Comic Sans MS', 'Segoe Print', cursive;
+  --font-body: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+  --header-h: 64px;
+  --bottom-nav-h: 0px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --gutter: 16px;
+  --max: 1120px;
+}
+
+@media (max-width: 759px) {
+  :root {
+    --header-h: 56px;
+    --bottom-nav-h: 62px;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-padding-top: calc(var(--header-h) + 12px);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 16px;
+  line-height: 1.35;
+  letter-spacing: 0.01em;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overflow-x: hidden;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: var(--star-power);
+}
+
+[hidden] {
+  display: none !important;
+}
+
+:focus-visible {
+  outline: 3px solid var(--star-power);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: #ff8f00;
+  color: #120f17;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Camada fixa de fundo: luzes de palco + grade de amplificador. */
+.stage-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(60% 45% at 12% -5%, rgba(255, 70, 30, 0.28), transparent 70%),
+    radial-gradient(55% 40% at 92% 0%, rgba(90, 60, 255, 0.24), transparent 70%),
+    radial-gradient(70% 50% at 50% 110%, rgba(255, 140, 0, 0.12), transparent 70%),
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.018) 0 2px, transparent 2px 7px),
+    repeating-linear-gradient(-45deg, rgba(0, 0, 0, 0.22) 0 2px, transparent 2px 7px),
+    linear-gradient(180deg, #100c16 0%, var(--bg) 60%);
+}
+
+/* Tipografia */
+.display {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+.chrome-text {
+  color: #dfe5ec;
+  background: var(--chrome);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 0 #000) drop-shadow(0 0 1px #000);
+}
+
+.fire-text {
+  color: #ffb21a;
+  background: var(--fire);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 0 #000) drop-shadow(0 0 1px #000);
+}
+
+.hand {
+  font-family: var(--font-hand);
+  letter-spacing: 0.01em;
+}
+
+.dim {
+  color: var(--text-dim);
+}
+
+.faint {
+  color: var(--text-faint);
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

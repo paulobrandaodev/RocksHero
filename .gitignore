@@ -1,0 +1,15 @@
+# Ferramentas de desenvolvimento
+tools/node_modules/
+tools/data/cache/
+tools/data/out/
+tools/fonts/ttf/
+tools/tests/e2e/screenshots/
+tools/tests/e2e/artifacts/
+
+# Firebase emulador / CLI
+*-debug.log
+.firebase/
+
+# Sistema
+.DS_Store
+Thumbs.db

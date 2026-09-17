@@ -1,0 +1,77 @@
+{
+  // Regras do Realtime Database da Rocks Hero.
+  // Só o usuário da banda (UID abaixo, de Authentication › Users) lê e escreve. Todo o resto é bloqueado.
+  // Se um dia a conta for recriada, troque o UID nas duas linhas .read/.write e publique de novo.
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "rockshero": {
+      ".read": "auth != null && auth.uid === 'R4jwZftuUqdEH8ueHDuulZJ9m6u2'",
+      ".write": "auth != null && auth.uid === 'R4jwZftuUqdEH8ueHDuulZJ9m6u2'",
+
+      "members": {
+        "$member": {
+          ".validate": "$member.matches(/^m-[a-z0-9-]+$/) && $member.length <= 42 && newData.hasChildren(['name', 'instrument', 'order', 't'])",
+          "name": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 40" },
+          "instrument": { ".validate": "newData.isString() && newData.val().matches(/^(vocal|guitarra|baixo|bateria|teclado|percussao|outro)$/)" },
+          "order": { ".validate": "newData.isNumber()" },
+          "archived": { ".validate": "newData.isBoolean()" },
+          "t": { ".validate": "newData.isNumber() && newData.val() <= now + 600000" },
+          "$other": { ".validate": false }
+        }
+      },
+
+      "progress": {
+        "$song": {
+          ".validate": "$song.matches(/^[a-z0-9-]+$/) && $song.length <= 120",
+          "$member": {
+            ".validate": "$member.matches(/^m-[a-z0-9-]+$/) && $member.length <= 42 && newData.hasChildren(['v', 't'])",
+            "v": { ".validate": "newData.val() === 'na' || (newData.isNumber() && newData.val() >= 0 && newData.val() <= 100)" },
+            "t": { ".validate": "newData.isNumber() && newData.val() <= now + 600000" },
+            "by": { ".validate": "newData.isString() && newData.val().length <= 42" },
+            "$other": { ".validate": false }
+          }
+        }
+      },
+
+      "setlists": {
+        "$list": {
+          ".validate": "$list.matches(/^[a-z0-9-]+$/) && $list.length <= 40",
+          "name": { ".validate": "newData.isString() && newData.val().length <= 80" },
+          "items": {
+            "$song": {
+              ".validate": "$song.matches(/^[a-z0-9-]+$/) && $song.length <= 120 && newData.hasChildren(['pos', 't'])",
+              "pos": { ".validate": "newData.isNumber()" },
+              "t": { ".validate": "newData.isNumber() && newData.val() <= now + 600000" },
+              "$other": { ".validate": false }
+            }
+          },
+          "$other": { ".validate": false }
+        }
+      },
+
+      "overrides": {
+        "$song": {
+          ".validate": "$song.matches(/^[a-z0-9-]+$/) && $song.length <= 120",
+          "tun": {
+            ".validate": "newData.hasChildren(['val', 't'])",
+            "val": { ".validate": "newData.isString() && newData.val().length <= 60" },
+            "t": { ".validate": "newData.isNumber() && newData.val() <= now + 600000" },
+            "by": { ".validate": "newData.isString() && newData.val().length <= 42" },
+            "$other": { ".validate": false }
+          },
+          "ins": {
+            ".validate": "newData.hasChildren(['val', 't'])",
+            "val": { ".validate": "newData.isString() && newData.val().matches(/^v?v?v?g?g?g?g?b?b?d?d?k?k?k?p?s?c?h?j?$/)" },
+            "t": { ".validate": "newData.isNumber() && newData.val() <= now + 600000" },
+            "by": { ".validate": "newData.isString() && newData.val().length <= 42" },
+            "$other": { ".validate": false }
+          },
+          "$other": { ".validate": false }
+        }
+      },
+
+      "$other": { ".validate": false }
+    }
+  }
+}
