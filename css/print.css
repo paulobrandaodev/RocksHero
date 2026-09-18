@@ -109,6 +109,10 @@
     display: contents !important;
   }
 
+  .listen {
+    display: none !important;
+  }
+
   .sl-num {
     color: #000;
     font-size: 22pt;

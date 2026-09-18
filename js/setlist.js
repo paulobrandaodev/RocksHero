@@ -62,8 +62,9 @@ RH.views.setlist = (() => {
           <div class="sl-song" data-open="${item.id}" role="button" tabindex="0">
             <span class="sl-title">${esc(song.t)}</span>
             <span class="sl-artist">${esc(song.a)} · ${esc(games)}</span>
+            <span class="sl-listen-m">${ui.listenLinks(item.id)}</span>
           </div>
-          <div class="sl-tech">${ui.tuningBadge(s.tuning(item.id))}${ui.instruments(s, item.id, { inline: true })}</div>
+          <div class="sl-tech">${ui.listenLinks(item.id)}${ui.tuningBadge(s.tuning(item.id))}${ui.instruments(s, item.id, { inline: true })}</div>
           ${ui.score(s.median(item.id))}
           <div class="sl-actions">
             <button type="button" data-move="-1" aria-label="Subir"${index === 0 ? ' disabled' : ''}>${RH.icons.svg('up')}</button>
@@ -135,6 +136,7 @@ RH.views.setlist = (() => {
   const onClick = async (e) => {
     const s = store();
     const t = e.target;
+    if (t.closest("a[data-listen]")) return; // YouTube/Spotify: só o link, sem abrir o painel
     const moveBtn = t.closest('[data-move]');
     if (moveBtn) return move(moveBtn.closest('.sl-item').dataset.id, Number(moveBtn.dataset.move));
     const remove = t.closest('[data-remove]');
@@ -163,7 +165,7 @@ RH.views.setlist = (() => {
       move(grip.closest('.sl-item').dataset.id, e.key === 'ArrowUp' ? -1 : 1);
       return;
     }
-    const open = e.target.closest('.sl-song[data-open]');
+    const open = e.target.matches('.sl-song[data-open]') ? e.target : null;
     if (open && (e.key === 'Enter' || e.key === ' ')) {
       e.preventDefault();
       RH.songSheet.open(open.dataset.open);

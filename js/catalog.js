@@ -24,7 +24,8 @@ RH.views.catalog = (() => {
 
   let root = null;
   let rows = new Map();
-  let filters = { q: '', tuning: 'all', status: 'all', sort: 'game', onlySetlist: false };
+  let filters = { q: '', tuning: 'all', status: 'all', sort: 'game', onlySetlist: false, ins: {}, insMode: 'exact', fits: false };
+  let insOpen = false;
   let gameId = 'gh1';
   let renderToken = 0;
   let resizeObserver = null;
@@ -36,7 +37,78 @@ RH.views.catalog = (() => {
     RH.safeStorage.set(PREFS_KEY, rest);
   };
 
-  const loadPrefs = () => ({ ...filters, ...(RH.safeStorage.get(PREFS_KEY) || {}), q: '' });
+  const loadPrefs = () => {
+    const saved = RH.safeStorage.get(PREFS_KEY) || {};
+    const ins = {};
+    for (const p of RH.PARTS) {
+      const v = saved.ins && saved.ins[p.key];
+      if (typeof v === 'string' && /^d$/.test(v) && Number(v) <= p.max) ins[p.key] = v;
+    }
+    return { ...filters, ...saved, q: '', ins, insMode: saved.insMode === 'min' ? 'min' : 'exact', fits: !!saved.fits };
+  };
+
+  // ---------- filtro de instrumentação ----------
+
+  const insFilterCount = () => Object.keys(filters.ins).length + (filters.fits ? 1 : 0);
+
+  const matchesIns = (id) => {
+    if (!insFilterCount()) return true;
+    const s = store();
+    const { counts } = s.instrumentation(id);
+    if (!counts) return false;
+    for (const [key, raw] of Object.entries(filters.ins)) {
+      const want = Number(raw);
+      const n = counts[key] || 0;
+      if (want === 0 ? n !== 0 : filters.insMode === 'min' ? n < want : n !== want) return false;
+    }
+    if (filters.fits && s.uncovered(id).length) return false;
+    return true;
+  };
+
+  const insPanelHtml = () => {
+    const seg = (attrs, label, pressed) => `<button type="button" ${attrs} aria-pressed="${pressed}">${label}</button>`;
+    const rowsHtml = RH.PARTS.map((p) => {
+      const cur = filters.ins[p.key] || 'any';
+      const values = [['any', 'Tanto faz'], ['0', 'Sem']];
+      if (p.max === 1) values.push(['1', 'Com']);
+      else for (let n = 1; n <= p.max; n++) values.push([String(n), filters.insMode === 'min' ? `${n}+` : String(n)]);
+      return `
+        <div class="ins-row${cur !== 'any' ? ' is-set' : ''}">
+          <span class="ins-name">${RH.icons.svg(p.icon)}${esc(p.name)}</span>
+          <div class="seg" role="group" aria-label="${esc(p.name)}">
+            ${values.map(([v, label]) => seg(`data-ins-part="${p.key}" data-ins-val="${v}"`, label, cur === v)).join('')}
+          </div>
+        </div>`;
+    }).join('');
+    return `
+      <div class="ins-head">
+        <span class="ins-title">${RH.icons.svg('filter')} Instrumentação da gravação original</span>
+        <div class="seg seg-mode" role="group" aria-label="Como contar">
+          ${seg('data-ins-mode="exact"', 'Quantidade exata', filters.insMode === 'exact')}
+          ${seg('data-ins-mode="min"', 'No mínimo', filters.insMode === 'min')}
+        </div>
+      </div>
+      <div class="ins-rows">${rowsHtml}</div>
+      <div class="ins-foot">
+        <label class="switch"><input type="checkbox" data-ins-fits${filters.fits ? ' checked' : ''}> Só as que a formação cobre inteira</label>
+        <button type="button" class="btn btn-sm btn-ghost" data-ins-clear${insFilterCount() ? '' : ' disabled'}>${RH.icons.svg('close')} Limpar instrumentos</button>
+      </div>`;
+  };
+
+  const insToggleHtml = () => {
+    const n = insFilterCount();
+    return `${RH.icons.svg('filter')}<span>Instrumentos</span>${n ? `<span class="count">${n}</span>` : ''}${RH.icons.svg(insOpen ? 'up' : 'down', 'caret')}`;
+  };
+
+  const refreshInsUi = () => {
+    const panel = ui.$('[data-ins-panel]', root);
+    const toggle = ui.$('[data-ins-toggle]', root);
+    panel.hidden = !insOpen;
+    if (insOpen) panel.innerHTML = insPanelHtml();
+    toggle.innerHTML = insToggleHtml();
+    toggle.setAttribute('aria-expanded', String(insOpen));
+    toggle.classList.toggle('is-active', insFilterCount() > 0);
+  };
 
   // ---------- dados da aba ----------
 
@@ -68,6 +140,7 @@ RH.views.catalog = (() => {
     const s = store();
     if (filters.q && !RH.catalog.search[id].includes(filters.q)) return false;
     if (filters.onlySetlist && !s.inSetlist(id)) return false;
+    if (!matchesIns(id)) return false;
     if (filters.tuning !== 'all') {
       const t = s.tuning(id);
       if (filters.tuning === 'unknown') { if (t.code) return false; }
@@ -123,7 +196,7 @@ RH.views.catalog = (() => {
           <div class="song-title">${esc(song.t)} ${badgesFor(item)}</div>
           <div class="song-sub">${esc(song.a)} · ${song.y}${games}</div>
         </div>
-        <div class="song-tech">${ui.tuningBadge(s.tuning(id))}${ui.instruments(s, id)}</div>
+        <div class="song-tech">${ui.listenLinks(id)}${ui.tuningBadge(s.tuning(id))}${ui.instruments(s, id)}</div>
         <div class="song-bars${members.length > 4 ? ' is-many' : ''}">${bars}</div>
         ${ui.score(s.median(id))}
         <button type="button" class="sl-toggle" data-toggle aria-pressed="${inSet}" title="${inSet ? 'Tirar do set list' : 'Adicionar ao set list'}" aria-label="${inSet ? 'Tirar do set list' : 'Adicionar ao set list'}">
@@ -252,7 +325,9 @@ RH.views.catalog = (() => {
             ${gameId === 'todas' ? '' : opt('sort', 'title', 'Título')}
           </select>
         </label>
+        <button type="button" class="btn btn-sm btn-filter${insFilterCount() ? ' is-active' : ''}" data-ins-toggle aria-expanded="${insOpen}" aria-controls="ins-panel">${insToggleHtml()}</button>
         <label class="switch"><input type="checkbox" data-filter="onlySetlist"${filters.onlySetlist ? ' checked' : ''}> Só no set list</label>
+        <div class="ins-filter" id="ins-panel" data-ins-panel${insOpen ? '' : ' hidden'}>${insOpen ? insPanelHtml() : ''}</div>
       </div>
       <p class="result-info" data-result-info aria-live="polite"></p>`;
   };
@@ -297,7 +372,7 @@ RH.views.catalog = (() => {
       visible += count;
     });
     const info = ui.$('[data-result-info]', root);
-    const active = filters.q || filters.tuning !== 'all' || filters.status !== 'all' || filters.onlySetlist;
+    const active = filters.q || filters.tuning !== 'all' || filters.status !== 'all' || filters.onlySetlist || insFilterCount() > 0;
     info.textContent = active ? `${visible} de ${total} músicas` : '';
     let empty = ui.$('[data-empty]', root);
     if (!visible && renderDone) {
@@ -370,7 +445,8 @@ RH.views.catalog = (() => {
   }, 250);
 
   const updateRow = (id) => {
-    const row = rows.get(id);
+    // Durante a montagem em partes, o mapa ainda está vazio: procura a linha no DOM.
+    const row = rows.get(id) || (root && root.querySelector(`.song-row[data-id="${id}"]`));
     if (!row) return;
     const items = gameId === 'todas'
       ? [{ id, entry: RH.catalog.songGames[id][0].entry, all: RH.catalog.songGames[id] }]
@@ -388,7 +464,34 @@ RH.views.catalog = (() => {
 
   // ---------- eventos ----------
 
+  const onInsClick = (e) => {
+    if (e.target.closest('[data-ins-toggle]')) {
+      insOpen = !insOpen;
+      refreshInsUi();
+      return true;
+    }
+    const partBtn = e.target.closest('[data-ins-part]');
+    const modeBtn = e.target.closest('[data-ins-mode]');
+    const clear = e.target.closest('[data-ins-clear]');
+    if (!partBtn && !modeBtn && !clear) return !!e.target.closest('[data-ins-panel]');
+    if (partBtn) {
+      const { insPart, insVal } = partBtn.dataset;
+      const ins = { ...filters.ins };
+      if (insVal === 'any') delete ins[insPart];
+      else ins[insPart] = insVal;
+      filters.ins = ins;
+    }
+    if (modeBtn) filters.insMode = modeBtn.dataset.insMode;
+    if (clear) { filters.ins = {}; filters.fits = false; }
+    savePrefs();
+    refreshInsUi();
+    applyFilters();
+    return true;
+  };
+
   const onClick = (e) => {
+    if (onInsClick(e)) return;
+    if (e.target.closest("a[data-listen]")) return; // YouTube/Spotify: só o link, sem abrir o painel
     const toggle = e.target.closest('[data-toggle]');
     if (toggle) {
       const id = toggle.closest('.song-row').dataset.id;
@@ -419,6 +522,14 @@ RH.views.catalog = (() => {
   }, 160);
 
   const onFilter = (e) => {
+    if (e.target.matches('[data-ins-fits]')) {
+      if (e.type !== 'change') return;
+      filters.fits = e.target.checked;
+      savePrefs();
+      refreshInsUi();
+      applyFilters();
+      return;
+    }
     const name = e.target.dataset.filter;
     if (!name) return;
     if (name === 'q') return onSearch(e.target.value);

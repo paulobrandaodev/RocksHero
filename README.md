@@ -2,7 +2,8 @@
 
 App da banda **Rocks Hero** para acompanhar quanto cada membro já tirou das músicas dos Guitar Hero e montar o set list do show. Feito em HTML, CSS e JavaScript puro: não tem etapa de build.
 
-- **Músicas**: uma aba por jogo, com as 719 músicas dos 13 Guitar Hero de console. Mostra a afinação original, os instrumentos e quanto cada membro já tirou, além da mediana da banda.
+- **Músicas**: uma aba por jogo, com as 719 músicas dos 13 Guitar Hero de console. Mostra a afinação original, os instrumentos e quanto cada membro já tirou, além da mediana da banda. Tem filtro por instrumentação (ex.: 2 guitarras e sem teclado) e botões para buscar a música no YouTube e no Spotify.
+- **Painel da música**: progresso e **observações de cada músico** (salvas enquanto digita e visíveis para a banda toda), correção de afinação/instrumentação e onde a música aparece.
 - **Set List**: arraste pelas gemas para ordenar. O resumo traz o rock meter da banda, avisa trocas de afinação entre músicas e as partes sem membro (ex.: teclado). Tem botão de imprimir.
 - **Banda**: formação, "quem é você" em cada aparelho e backup.
 
@@ -40,13 +41,14 @@ O plano gratuito (Spark) sobra para uma banda.
    - Em *Usuários › Adicionar usuário*, use o e-mail `rockshero@example.com` (é o `bandEmail` do arquivo de config) e a senha **`Hero@123`**.
    - Copie o **UID** do usuário criado.
    - Em *Configurações › Ações do usuário* (em inglês, *User actions*), **desmarque a opção de permitir criação de contas** (*Enable create (sign-up)*). Assim ninguém cria outra conta com a sua apiKey.
-6. **Regras do banco**: abra `database.rules.json`, troque `UID_DA_BANDA` (aparece 2 vezes) pelo UID copiado. Cole o conteúdo em *Realtime Database › Regras* e clique em **Publicar**.
+6. **Regras do banco** (repita este passo sempre que `database.rules.json` mudar): abra `database.rules.json`, troque `UID_DA_BANDA` (aparece 2 vezes) pelo UID copiado. Cole o conteúdo em *Realtime Database › Regras* e clique em **Publicar**.
 
 Pronto: abra o app, digite `Hero@123` e o status no topo deve mostrar **Sincronizado**.
 
 Observações:
 - **A `apiKey` não é segredo.** O Firebase foi feito para ela ficar no site. Quem protege os dados são as regras (só a conta da banda lê e escreve) e a senha. O GitHub pode mandar um alerta de "secret" sobre essa chave: pode dispensar.
 - **Trocar a senha**: no console, em *Authentication › Usuários*, use o menu do usuário para redefinir a senha. Os aparelhos logados precisarão entrar de novo.
+- **Botão do Spotify**: no celular, abre o app do Spotify se estiver instalado. No computador, tenta abrir o app e, se ele não abrir, oferece o Spotify Web.
 - **Primeiro acesso de cada aparelho precisa de internet.** Depois disso, dá para editar sem sinal: as mudanças ficam guardadas e são enviadas quando a conexão volta.
 
 ## 3. Publicar no GitHub Pages
@@ -61,7 +63,7 @@ No celular, use **Adicionar à tela inicial**. O app abre como aplicativo e func
 
 ## 4. Backup
 
-Na tela **Banda › Backup**, *Exportar* baixa um `.json` com todo o progresso, o set list e as correções. *Importar* mescla o arquivo com o que já existe, sempre mantendo a edição mais recente de cada item. O plano gratuito do Firebase não faz backup sozinho, então vale exportar de vez em quando. Esse caminho também leva para o Firebase os dados preenchidos no modo local.
+Na tela **Banda › Backup**, *Exportar* baixa um `.json` com todo o progresso, as observações, o set list e as correções. *Importar* mescla o arquivo com o que já existe, sempre mantendo a edição mais recente de cada item. O plano gratuito do Firebase não faz backup sozinho, então vale exportar de vez em quando. Esse caminho também leva para o Firebase os dados preenchidos no modo local.
 
 ## 5. Sobre os dados das músicas
 
@@ -99,6 +101,8 @@ npm run test:rules        # regras do banco
 npm run test:e2e          # app completo no Chrome: login, sincronização, offline, arrastar, impressão
 node logo/build-logo.mjs  # regenera o logo e os ícones
 ```
+
+Os scripts de captura de tela (`tests/visual`) abrem o app com `?local=1` e param se ele não estiver em modo local, para nunca mexer nos dados reais da banda.
 
 Para testar o app contra o emulador, sirva a pasta (`node tools/tests/e2e/server.mjs 8080`) e abra `http://127.0.0.1:8080/rocks-hero/?emulator=1`.
 

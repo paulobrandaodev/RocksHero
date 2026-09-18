@@ -301,6 +301,30 @@ test('importar backup mescla pelo horário mais recente e ignora lixo', async ()
   assert.throws(() => store.importData({ foo: 1 }));
 });
 
+test('observação de cada músico: grava, sincroniza, apaga quando vazia e entra no backup', async () => {
+  const server = newServer();
+  const a = await started(server);
+  const b = await started(server);
+  a.store.setNote('band--full', 'm-guitarra', 'Capo na 2ª casa  \n');
+  await tick();
+  assert.equal(server.tree.notes['band--full']['m-guitarra'].v, 'Capo na 2ª casa');
+  assert.equal(b.store.memberNote('band--full', 'm-guitarra').v, 'Capo na 2ª casa');
+  assert.deepEqual(plain(b.store.songNotes('band--full').map((x) => x.member.id)), ['m-guitarra']);
+  a.store.setNote('band--full', 'm-guitarra', 'x'.repeat(900));
+  assert.equal(a.store.memberNote('band--full', 'm-guitarra').v.length, a.store.NOTE_MAX);
+  assert.equal(a.store.exportData().data.notes['band--full']['m-guitarra'].v.length, a.store.NOTE_MAX);
+  a.store.setNote('band--full', 'm-guitarra', '   ');
+  await tick();
+  assert.equal(a.store.memberNote('band--full', 'm-guitarra'), null);
+  assert.equal(server.tree.notes, undefined);
+  const applied = a.store.importData({ app: 'rocks-hero', data: { notes: {
+    'band--full': { 'm-baixo': { v: 'Palheta', t: 1 }, 'm-vocal': { v: '', t: 1 } },
+    'nao--existe': { 'm-baixo': { v: 'x', t: 1 } },
+  } } });
+  assert.equal(applied, 1);
+  assert.equal(a.store.memberNote('band--full', 'm-baixo').v, 'Palheta');
+});
+
 test('adaptador local: senha correta entra e dados persistem no navegador', async () => {
   const storage = new MemoryStorage();
   const ctx = loadApp({ storage, songs: SONGS, meta: META });

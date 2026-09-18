@@ -1,3 +1,3 @@
 window.RH = window.RH || {};
 // Suba este número a cada publicação: ele força os navegadores a baixar os arquivos novos.
-RH.VERSION = '1.0.0';
+RH.VERSION = '1.1.0';

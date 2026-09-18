@@ -127,6 +127,38 @@ await step('progresso editado no aparelho A aparece no B', async () => {
   await pageA.keyboard.press('Escape');
 });
 
+await step('observação de um músico digitada no A aparece no B', async () => {
+  await pageA.click(`.song-row[data-id="${SONG_A}"]`);
+  await pageA.waitForSelector('.song-sheet.is-open [data-member="m-baixo"]');
+  await pageA.click('.song-sheet.is-open [data-member="m-baixo"]');
+  await pageA.waitForSelector('.song-sheet.is-open [data-note]');
+  await pageA.type('.song-sheet.is-open [data-note]', 'Usar palheta na ponte');
+  await waitForServer(`notes/${SONG_A}/m-baixo`, (v) => v && v.v === 'Usar palheta na ponte');
+  await pageA.keyboard.press('Escape');
+  await pageB.click(`.song-row[data-id="${SONG_A}"]`);
+  await pageB.waitForSelector('.song-sheet.is-open [data-member="m-baixo"] .mc-note');
+  await pageB.click('.song-sheet.is-open [data-member="m-baixo"]');
+  const text = await pageB.$eval('.song-sheet.is-open [data-note]', (el) => el.value);
+  if (text !== 'Usar palheta na ponte') throw new Error(`observação no B: "${text}"`);
+  await pageB.keyboard.press('Escape');
+});
+
+await step('botões do YouTube e do Spotify apontam para a busca e não abrem o painel', async () => {
+  const links = await pageA.$$eval(`.song-row[data-id="${SONG_A}"] a[data-listen]`, (els) => els.map((a) => ({ href: a.href, target: a.target })));
+  if (links.length !== 2) throw new Error(`esperava 2 links, veio ${links.length}`);
+  if (!links[0].href.startsWith('https://www.youtube.com/results?search_query=')) throw new Error(links[0].href);
+  if (!links[1].href.startsWith('https://open.spotify.com/search/')) throw new Error(links[1].href);
+  if (links.some((l) => l.target !== '_blank')) throw new Error('links devem abrir em nova guia');
+  // Clique no YouTube sem sair da página: a nova guia é bloqueada e o painel não pode abrir.
+  await pageA.evaluate((id) => {
+    const a = document.querySelector(`.song-row[data-id="${id}"] a[data-listen="youtube"]`);
+    a.addEventListener('click', (e) => e.preventDefault(), { once: true });
+    a.click();
+  }, SONG_A);
+  await new Promise((r) => setTimeout(r, 300));
+  if (await pageA.$('.song-sheet.is-open')) throw new Error('o clique no link abriu o painel da música');
+});
+
 await step('slider no painel grava ao soltar', async () => {
   await pageA.click(`.song-row[data-id="${SONG_B}"]`);
   await pageA.waitForSelector('.song-sheet.is-open [data-slider]');

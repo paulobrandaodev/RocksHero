@@ -32,11 +32,12 @@ for (const [name, viewport] of Object.entries(VIEWPORTS)) {
     await page.screenshot({ path: join(outDir, `${name}-${label}.png`) });
   };
 
-  await page.goto(url, { waitUntil: 'networkidle0' });
+  await page.goto(`${url}?local=1`, { waitUntil: 'networkidle0' }); // modo local: nunca toca no Firebase de verdade
   await shot('01-login');
   await page.type('#login-password', 'Hero@123');
   await page.keyboard.press('Enter');
   await page.waitForSelector('#app:not([hidden]) .song-row', { timeout: 10000 });
+  if (await page.evaluate(() => RH.store.status.mode) !== 'local') throw new Error('O app não está em modo local: abortado para não mexer nos dados da banda.');
   await sleep(900);
   // fecha o "Quem é você?" escolhendo o guitarrista
   const pick = await page.$('[data-pick="m-guitarra"]');

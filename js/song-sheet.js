@@ -61,8 +61,35 @@ RH.songSheet = (() => {
       </form>`;
   };
 
+  const noteFieldHtml = (member) => {
+    const s = store();
+    const n = s.memberNote(current.id, member.id);
+    const by = n && n.by && n.by !== member.id && s.state.members && s.state.members[n.by] ? ` por ${s.state.members[n.by].name}` : '';
+    const meta = n ? `Salvo ${ui.formatWhen(n.t)}${by}` : 'Salva sozinha enquanto você digita';
+    return `
+      <label class="member-note">
+        <span class="mn-label">${RH.icons.svg('note')} Observações de ${esc(member.name)}</span>
+        <textarea class="input" data-note rows="3" maxlength="${s.NOTE_MAX}"
+          placeholder="Ex.: capotraste na 2ª casa, timbre com chorus, entra depois da virada da bateria…">${esc(n ? n.v : '')}</textarea>
+        <span class="mn-meta"><span data-note-status>${esc(meta)}</span><span data-note-count>${n ? n.v.length : 0}/${s.NOTE_MAX}</span></span>
+      </label>`;
+  };
+
+  // Observação em edição: grava com atraso curto e sempre antes de trocar de membro ou fechar.
+  let pendingNote = null;
+  const saveNote = RH.util.debounce(() => {
+    if (!pendingNote) return;
+    const { id, memberId, text } = pendingNote;
+    pendingNote = null;
+    store().setNote(id, memberId, text);
+    const status = current && current.id === id && current.memberId === memberId && current.sheet.body.querySelector('[data-note-status]');
+    if (status) status.textContent = text.trim() ? 'Salvo agora' : 'Observação apagada';
+  }, 700);
+  const flushNote = () => { if (pendingNote) saveNote.flush(); };
+
   const render = () => {
     if (!current) return;
+    flushNote();
     const s = store();
     const { id } = current;
     const song = RH.SONGS[id];
@@ -94,9 +121,22 @@ RH.songSheet = (() => {
 
     const pickerChips = members.map((m) => {
       const leaf = s.progress(id, m.id);
-      const val = !applicable.has(m.id) ? '—' : `${leaf && typeof leaf.v === 'number' ? leaf.v : 0}%`;
-      return `<button type="button" class="chip inst-${esc(m.instrument)}" aria-pressed="${m.id === current.memberId}" data-member="${esc(m.id)}">
-        ${ui.avatar(m)}<span>${esc(m.name)}</span><span class="val">${val}</span></button>`;
+      const isNa = !applicable.has(m.id);
+      const pct = leaf && typeof leaf.v === 'number' ? leaf.v : 0;
+      const level = isNa || pct === 0 ? 'lv-none' : ui.levelClass(pct);
+      const hasNote = !!s.memberNote(id, m.id);
+      const label = `${m.name}: ${isNa ? 'fora desta música' : `${pct}%`}${hasNote ? ', tem observação' : ''}`;
+      return `<button type="button" class="member-chip inst-${esc(m.instrument)} ${level}${isNa ? ' is-na' : ''}" aria-pressed="${m.id === current.memberId}" data-member="${esc(m.id)}" title="${esc(label)}" aria-label="${esc(label)}">
+        ${ui.avatar(m)}
+        <span class="mc-body">
+          <span class="mc-name">${esc(m.name)}</span>
+          <span class="mc-meter">
+            <span class="mc-track" aria-hidden="true"><i style="--pct:${isNa ? 0 : pct}%"></i></span>
+            <span class="mc-val">${isNa ? 'N/A' : `${pct}<small>%</small>`}</span>
+          </span>
+        </span>
+        ${hasNote ? `<span class="mc-note" aria-hidden="true">${RH.icons.svg('note')}</span>` : ''}
+      </button>`;
     }).join('');
 
     const member = members.find((m) => m.id === current.memberId);
@@ -124,8 +164,20 @@ RH.songSheet = (() => {
             <span>${isNa && !explicitNa ? `${esc(member.name)} fica fora da mediana: a música não tem ${esc((RH.PARTS.find((p) => p.key === (RH.MEMBER_INSTRUMENTS[member.instrument] || {}).part) || { name: 'essa parte' }).name.toLowerCase())}.` : ''}</span>
             <span>${leaf && leaf.t ? `Atualizado ${ui.formatWhen(leaf.t)}${leaf.by && s.state.members && s.state.members[leaf.by] ? ` por ${esc(s.state.members[leaf.by].name)}` : ''}` : 'Ainda sem registro'}</span>
           </div>
+          ${noteFieldHtml(member)}
         </div>`;
     }
+
+    const others = s.songNotes(id).filter((x) => x.member.id !== current.memberId);
+    const othersHtml = others.length ? `
+        <div class="band-notes">
+          <span class="bn-title">Observações da banda</span>
+          ${others.map(({ member: m, note: n }) => `
+            <button type="button" class="bn-item inst-${esc(m.instrument)}" data-member="${esc(m.id)}" title="Ver ${esc(m.name)}">
+              ${ui.avatar(m)}
+              <span class="bn-text"><b>${esc(m.name)}</b><span>${esc(n.v)}</span></span>
+            </button>`).join('')}
+        </div>` : '';
 
     const inSet = s.inSetlist(id);
     const body = `
@@ -147,15 +199,20 @@ RH.songSheet = (() => {
           </div>
         </div>
         ${note ? `<p class="dim" style="font-family:var(--font-body);font-size:14px;margin:10px 0 0">${esc(note)}</p>` : ''}
+        <div class="sheet-listen"><span class="label">Ouvir</span>${ui.listenLinks(id, { labels: true })}</div>
       </section>
       <section class="sheet-section">
-        <h3>Corrigir dados <button type="button" class="link-btn" data-toggle-edit>${current.editing ? 'Fechar' : 'Editar afinação/instrumentação'}</button></h3>
+        <h3>${RH.icons.svg('wrench')} Corrigir dados
+          <button type="button" class="btn btn-sm btn-edit${current.editing ? ' is-open' : ''}" data-toggle-edit aria-expanded="${current.editing}">
+            ${RH.icons.svg(current.editing ? 'close' : 'edit')}${current.editing ? 'Fechar' : 'Editar <span class="hide-narrow">afinação e instrumentação</span>'}
+          </button></h3>
         ${current.editing ? renderEditForm(id) : ''}
       </section>
       <section class="sheet-section">
         <h3>${RH.icons.svg('users')} Quanto cada um já tirou</h3>
         <div class="member-picker">${pickerChips}</div>
         ${editor}
+        ${othersHtml}
       </section>
       <section class="sheet-section">
         <h3>${RH.icons.svg('music')} Aparece em</h3>
@@ -265,6 +322,14 @@ RH.songSheet = (() => {
   };
 
   const onInput = (e) => {
+    if (e.target.matches('[data-note]')) {
+      pendingNote = { id: current.id, memberId: current.memberId, text: e.target.value };
+      const box = e.target.closest('.member-note');
+      box.querySelector('[data-note-status]').textContent = 'Salvando…';
+      box.querySelector('[data-note-count]').textContent = `${e.target.value.length}/${store().NOTE_MAX}`;
+      saveNote();
+      return;
+    }
     if (!e.target.matches('[data-slider]')) return;
     const v = Number(e.target.value);
     e.target.style.setProperty('--pct', `${v}%`);
@@ -288,6 +353,17 @@ RH.songSheet = (() => {
     bodyEl.addEventListener('submit', guard(onSubmit));
     bodyEl.addEventListener('change', guard(onChange));
     bodyEl.addEventListener('input', guard(onInput));
+    bodyEl.addEventListener('focusout', guard((e) => {
+      if (!e.target.matches('[data-note]')) return;
+      flushNote();
+      // Aplica o que chegou de outros aparelhos enquanto digitava (se o foco não foi para outro campo).
+      setTimeout(() => {
+        if (!current || !current.pendingRender || current.dragging) return;
+        const active = document.activeElement;
+        if (active && current.sheet.el.contains(active) && active.matches('input:not([type=range]), select, textarea')) return;
+        render();
+      }, 0);
+    }));
     bodyEl.addEventListener('pointerdown', guard((e) => { if (e.target.matches('[data-slider]')) current.dragging = true; }));
     const release = () => {
       if (!current || !current.dragging) return;
@@ -298,6 +374,7 @@ RH.songSheet = (() => {
     window.addEventListener('pointercancel', release);
     const origClose = sheet.close;
     sheet.close = () => {
+      flushNote();
       window.removeEventListener('pointerup', release);
       window.removeEventListener('pointercancel', release);
       origClose();
@@ -309,7 +386,7 @@ RH.songSheet = (() => {
     if (!current) return;
     if (!(changes.members || changes.setlist || changes.songs.has(current.id))) return;
     const active = document.activeElement;
-    const typing = active && current.sheet.el.contains(active) && active.matches('input:not([type=range]), select');
+    const typing = active && current.sheet.el.contains(active) && active.matches('input:not([type=range]), select, textarea');
     if (current.dragging || typing) {
       current.pendingRender = true;
       return;

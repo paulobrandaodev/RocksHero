@@ -927,3 +927,135 @@
   margin: 0;
   color: var(--text-dim);
 }
+
+/* ---------- Ouvir: YouTube e Spotify ---------- */
+.listen {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Mesmo tamanho do selo de afinação. */
+.listen-btn {
+  --brand: #fff;
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 24px;
+  border-radius: 5px;
+  background: linear-gradient(180deg, #2c2635, #1c1823);
+  box-shadow: inset 0 0 0 1px #4a4157, inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  color: var(--brand);
+  text-decoration: none;
+  transition: box-shadow 0.15s, transform 0.08s, filter 0.15s;
+}
+
+.listen-btn.is-youtube { --brand: #ff3b30; }
+.listen-btn.is-spotify { --brand: #1ed760; }
+
+.listen-btn .mi,
+.listen-btn .icon {
+  width: 17px;
+  height: 17px;
+}
+
+.listen-btn:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 1px;
+}
+
+@media (hover: hover) {
+  .listen-btn:hover {
+    box-shadow: inset 0 0 0 1px var(--brand), 0 0 10px rgba(255, 255, 255, 0.12);
+    filter: brightness(1.15);
+  }
+}
+
+.listen-btn:active {
+  transform: translateY(1px);
+}
+
+/* Versão com texto (painel da música). */
+.listen-full {
+  gap: 8px;
+}
+
+.listen-full .listen-btn {
+  display: inline-flex;
+  gap: 7px;
+  width: auto;
+  height: 34px;
+  padding: 0 12px 0 10px;
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.listen-full .listen-btn .icon {
+  width: 20px;
+  height: 20px;
+  color: var(--brand);
+}
+
+.toast a {
+  color: var(--gem-green);
+  font-weight: 600;
+}
+
+/* ---------- Controle segmentado ---------- */
+.seg {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 9px;
+  background: #0e0c12;
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.seg button {
+  min-width: 34px;
+  min-height: 30px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-dim);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+@media (hover: hover) {
+  .seg button:hover {
+    background: var(--panel-2);
+    color: var(--text);
+  }
+}
+
+.seg button[aria-pressed='true'] {
+  background: linear-gradient(180deg, #3b2a0f, #241709);
+  box-shadow: inset 0 0 0 2px var(--gem-orange);
+  color: #fff;
+}
+
+.seg button[data-ins-val='any'][aria-pressed='true'] {
+  background: var(--panel-3);
+  box-shadow: inset 0 0 0 1px var(--line);
+  color: var(--text-dim);
+}
+
+.hide-narrow {
+  display: contents;
+}
+
+@media (max-width: 519px) {
+  .hide-narrow {
+    display: none;
+  }
+}

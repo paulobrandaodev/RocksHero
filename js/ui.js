@@ -73,6 +73,56 @@ RH.ui = (() => {
     return `<span class="inst" title="${esc(insText(counts) + gapText)}">${icons.join('')}</span>`;
   };
 
+  // ---------- Ouvir a música (YouTube e Spotify) ----------
+
+  const listenQuery = (song) => `${song.t} ${song.a}`;
+  const youtubeUrl = (song) => `https://www.youtube.com/results?search_query=${encodeURIComponent(listenQuery(song))}`;
+  const spotifyWebUrl = (song) => `https://open.spotify.com/search/${encodeURIComponent(listenQuery(song))}`;
+  const spotifyAppUrl = (song) => `spotify:search:${encodeURIComponent(listenQuery(song))}`;
+
+  // Botões compactos (linhas das listas) ou com texto (painel da música).
+  const listenLinks = (songId, { labels = false } = {}) => {
+    const song = RH.SONGS[songId];
+    if (!song) return '';
+    const name = esc(`${song.t} (${song.a})`);
+    const icon = (n) => (labels ? RH.icons.svg(n) : RH.icons.mask(n));
+    return `<span class="listen${labels ? ' listen-full' : ''}">
+      <a class="listen-btn is-youtube" href="${esc(youtubeUrl(song))}" target="_blank" rel="noopener" data-listen="youtube" title="Buscar no YouTube" aria-label="Buscar ${name} no YouTube">${icon('youtube')}${labels ? '<span>YouTube</span>' : ''}</a>
+      <a class="listen-btn is-spotify" href="${esc(spotifyWebUrl(song))}" target="_blank" rel="noopener" data-listen="spotify" data-song="${esc(songId)}" title="Buscar no Spotify" aria-label="Buscar ${name} no Spotify">${icon('spotify')}${labels ? '<span>Spotify</span>' : ''}</a>
+    </span>`;
+  };
+
+  // No celular, o link https do Spotify já abre o app instalado (App Links / Universal Links).
+  // No computador, tenta o app pelo protocolo spotify:; se nada abrir, oferece o Spotify Web.
+  const SPOTIFY_WEB_KEY = 'rh:v1:ui:spotify-web';
+  const isDesktop = () => !!(window.matchMedia && window.matchMedia('(pointer: fine)').matches)
+    && !/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+
+  const openSpotify = (songId) => {
+    const song = RH.SONGS[songId];
+    if (!song || !isDesktop() || RH.safeStorage.getRaw(SPOTIFY_WEB_KEY) === '1') return false;
+    let left = false;
+    const onLeave = () => { left = true; };
+    window.addEventListener('blur', onLeave, { once: true });
+    document.addEventListener('visibilitychange', onLeave, { once: true });
+    window.location.href = spotifyAppUrl(song);
+    setTimeout(() => {
+      window.removeEventListener('blur', onLeave);
+      document.removeEventListener('visibilitychange', onLeave);
+      if (left) return;
+      toast(`O app do Spotify não abriu. <a href="${esc(spotifyWebUrl(song))}" target="_blank" rel="noopener" data-spotify-web>Abrir no Spotify Web</a>`, { html: true, timeout: 7000 });
+    }, 1500);
+    return true;
+  };
+
+  document.addEventListener('click', (e) => {
+    const web = e.target.closest('[data-spotify-web]');
+    if (web) { RH.safeStorage.setRaw(SPOTIFY_WEB_KEY, '1'); return; }
+    const link = e.target.closest('a[data-listen]');
+    if (!link || e.defaultPrevented) return;
+    if (link.dataset.listen === 'spotify' && !e.ctrlKey && !e.metaKey && !e.shiftKey && openSpotify(link.dataset.song)) e.preventDefault();
+  });
+
   const memberIcon = (member) => (RH.MEMBER_INSTRUMENTS[member.instrument] || RH.MEMBER_INSTRUMENTS.outro).icon;
 
   const avatar = (member) =>
@@ -296,7 +346,7 @@ RH.ui = (() => {
 
   return {
     $, $$, esc, GAME_MARKS, TIER_COLORS,
-    levelClass, stars, score, emblem, tuningBadge, insText, instruments, memberIcon, avatar, memberBar,
+    levelClass, stars, score, emblem, tuningBadge, insText, instruments, listenLinks, memberIcon, avatar, memberBar,
     rockMeter, formatWhen, toast, sheet, confirm, download,
   };
 })();

@@ -7,7 +7,7 @@ const browser = await puppeteer.launch({ executablePath: 'C:/Program Files/Googl
 const page = await browser.newPage();
 await page.setViewport({ width: 794, height: 1123 });
 await page.evaluateOnNewDocument(() => { try { localStorage.setItem('rh:v1:ui:asked-me', '1'); } catch {} });
-await page.goto(`${url}#/setlist`);
+await page.goto(`${url}?local=1#/setlist`); // modo local: nunca toca no Firebase de verdade
 await page.type('#login-password', 'Hero@123');
 await page.keyboard.press('Enter');
 await page.waitForFunction(() => RH.store && RH.store.members().length === 4);

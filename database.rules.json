@@ -71,6 +71,19 @@
         }
       },
 
+      "notes": {
+        "$song": {
+          ".validate": "$song.matches(/^[a-z0-9-]+$/) && $song.length <= 120",
+          "$member": {
+            ".validate": "$member.matches(/^m-[a-z0-9-]+$/) && $member.length <= 42 && newData.hasChildren(['v', 't'])",
+            "v": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 500" },
+            "t": { ".validate": "newData.isNumber() && newData.val() <= now + 600000" },
+            "by": { ".validate": "newData.isString() && newData.val().length <= 42" },
+            "$other": { ".validate": false }
+          }
+        }
+      },
+
       "$other": { ".validate": false }
     }
   }

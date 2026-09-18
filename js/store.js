@@ -6,6 +6,7 @@
      setlists/main/name:           string
      setlists/main/items/{songId}: {pos, t}
      overrides/{songId}/{tun|ins}: {val, t, by}
+     notes/{songId}/{memberId}:    {v: texto, t, by}   (observação de cada músico)
 
    `remote` é a última cópia conhecida do servidor (também guardada em cache).
    `journal` guarda edições ainda não confirmadas, sobrevive a recarregar a página
@@ -57,7 +58,7 @@ RH.createStore = (adapter, options = {}) => {
 
   const diff = (prev, next) => {
     const songs = new Set();
-    for (const branch of ['progress', 'overrides']) {
+    for (const branch of ['progress', 'overrides', 'notes']) {
       const a = prev[branch] || {};
       const b = next[branch] || {};
       for (const id of new Set([...Object.keys(a), ...Object.keys(b)])) {
@@ -275,6 +276,31 @@ RH.createStore = (adapter, options = {}) => {
     write({ [path]: leaf });
   };
 
+  // ---------- observações de cada músico ----------
+
+  const NOTE_MAX = 500;
+
+  const memberNote = (songId, memberId) => {
+    const leaf = state.notes && state.notes[songId] && state.notes[songId][memberId];
+    return leaf && typeof leaf.v === 'string' && leaf.v ? leaf : null;
+  };
+
+  // Observações da música, na ordem da formação (só de membros ativos).
+  const songNotes = (songId) => members()
+    .map((m) => ({ member: m, note: memberNote(songId, m.id) }))
+    .filter((x) => x.note);
+
+  const setNote = (songId, memberId, text) => {
+    const path = `notes/${songId}/${memberId}`;
+    const v = String(text == null ? '' : text).replace(/\s+$/, '').slice(0, NOTE_MAX);
+    const current = memberNote(songId, memberId);
+    if ((current ? current.v : '') === v) return;
+    if (!v.trim()) return write({ [path]: null });
+    const leaf = { v, t: now() };
+    if (me()) leaf.by = me();
+    write({ [path]: leaf });
+  };
+
   // ---------- set list ----------
 
   const setlist = () => {
@@ -396,6 +422,7 @@ RH.createStore = (adapter, options = {}) => {
     item: (it) => it && typeof it.pos === 'number' && isFinite(it.pos),
     tun: (o) => o && typeof o.val === 'string' && o.val.length <= 60,
     ins: (o) => o && typeof o.val === 'string' && (o.val === '' || RH.parseIns(o.val)),
+    note: (n) => n && typeof n.v === 'string' && n.v.trim() && n.v.length <= NOTE_MAX,
   };
 
   const importData = (file) => {
@@ -441,6 +468,15 @@ RH.createStore = (adapter, options = {}) => {
         const clean = { val: o.val, t: o.t };
         if (typeof o.by === 'string' && o.by.length <= 42) clean.by = o.by;
         consider(`overrides/${songId}/${field}`, clean, field);
+      }
+    }
+    for (const [songId, perMember] of Object.entries(incoming.notes || {})) {
+      if (!songOk(songId)) continue;
+      for (const [memberId, leaf] of Object.entries(perMember || {})) {
+        if (!memberIdOk(memberId) || !leaf) continue;
+        const clean = { v: leaf.v, t: leaf.t };
+        if (typeof leaf.by === 'string' && leaf.by.length <= 42) clean.by = leaf.by;
+        consider(`notes/${songId}/${memberId}`, clean, 'note');
       }
     }
     write(updates);
@@ -499,6 +535,10 @@ RH.createStore = (adapter, options = {}) => {
     progress,
     setProgress,
     setOverride,
+    memberNote,
+    songNotes,
+    setNote,
+    NOTE_MAX,
     applicableMembers,
     median,
     uncovered,
