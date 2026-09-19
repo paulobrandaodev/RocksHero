@@ -166,7 +166,6 @@ RH.views.setlist = (() => {
       start != null ? `<span title="Começa aos ${esc(U.formatDuration(start))} do show">▸ ${esc(U.formatDuration(start))}</span>` : '',
       dur.sec ? `<span title="Duração">${esc(U.formatDuration(dur.sec))}</span>` : '',
       bpm.val ? `<span title="${esc(`${bpm.val} BPM${bpm.confirmed ? '' : ' (a confirmar)'}`)}">${bpm.val} bpm</span>` : '',
-      ui.wantBadge(s.wanters(item.id).length, s.wants(item.id, s.me())),
     ].filter(Boolean).join('');
     return `
       <li class="sl-item" data-id="${item.id}">
@@ -180,9 +179,8 @@ RH.views.setlist = (() => {
             <span class="sl-title">${esc(song.t)}</span>
             <span class="sl-artist">${esc(song.a)} · ${esc(games)}</span>
             ${info ? `<span class="sl-info">${info}</span>` : ''}
-            <span class="sl-listen-m">${ui.listenLinks(item.id)}</span>
           </div>
-          <div class="sl-tech">${ui.listenLinks(item.id)}${ui.tuningBadge(s.tuning(item.id))}${ui.instruments(s, item.id, { inline: true })}</div>
+          <div class="sl-tech">${ui.tuningBadge(s.tuning(item.id))}${ui.instruments(s, item.id, { inline: true })}</div>
           ${ui.score(s.median(item.id))}
           <div class="sl-actions">
             <button type="button" data-move="-1" aria-label="Subir"${index === 0 ? ' disabled' : ''}>${RH.icons.svg('up')}</button>
@@ -421,7 +419,6 @@ RH.views.setlist = (() => {
   const onClick = async (e) => {
     const s = store();
     const t = e.target;
-    if (t.closest('a[data-listen]')) return; // YouTube/Spotify: só o link, sem abrir o painel
     const moveBtn = t.closest('[data-move]');
     if (moveBtn) return move(moveBtn.closest('.sl-item').dataset.id, Number(moveBtn.dataset.move));
     const remove = t.closest('[data-remove]');

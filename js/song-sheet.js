@@ -156,9 +156,9 @@ RH.songSheet = (() => {
     const note = s.note(id);
 
     const tuningNote = t.overridden
-      ? `Corrigida pela banda${t.t ? ` ${ui.formatWhen(t.t)}` : ''}.`
-      : tInfo.unknown ? 'Ninguém confirmou ainda. Se souber, corrija.'
-        : !t.confirmed ? 'Informação a confirmar: vale checar antes do ensaio.' : '';
+      ? `Afinação corrigida pela banda${t.t ? ` ${ui.formatWhen(t.t)}` : ''}.`
+      : tInfo.unknown ? 'Afinação desconhecida: se souber, corrija.'
+        : !t.confirmed ? 'Afinação a confirmar antes do ensaio.' : '';
 
     const gapsText = gaps.length
       ? `Sem membro para: ${gaps.map((g) => `${g.missing > 1 ? `${g.missing} × ` : ''}${RH.PARTS.find((p) => p.key === g.key).name.toLowerCase()}`).join(', ')}.`
@@ -236,32 +236,35 @@ RH.songSheet = (() => {
     const wanters = s.wanters(id);
     const iWant = s.wants(id, me);
     const timeline = songTimeline(id);
+    const tempoNote = dur.overridden || bpm.overridden ? 'Duração/BPM corrigidos pela banda.' : bpm.val && !bpm.confirmed ? 'BPM a confirmar.' : '';
     const listName = s.setlist().name || 'set list';
     const body = `
       <section class="sheet-section">
         <div class="song-facts">
-          <div class="fact">
-            <span class="label">Afinação original</span>
+          <div class="fact fact-tuning">
+            <span class="label">Afinação e andamento</span>
             <div class="value">${ui.tuningBadge(t)} <span>${esc(tInfo.label)}</span></div>
-            ${tuningNote ? `<div class="note">${esc(tuningNote)}</div>` : ''}
+            <div class="value fact-tempo">${dur.sec ? `<span class="dur">${esc(ui.durText(dur))}</span>` : '<span class="faint">duração ?</span>'}${ui.bpmBadge(bpm) || '<span class="faint">sem BPM</span>'}</div>
+            ${tuningNote || tempoNote ? `<div class="note">${esc([tuningNote, tempoNote].filter(Boolean).join(' '))}</div>` : ''}
           </div>
-          <div class="fact">
+          <div class="fact fact-ins">
             <span class="label">Instrumentação</span>
             <div class="value">${ui.instruments(s, id, { inline: true })}</div>
             <div class="note">${esc(ui.insText(ins.counts))}${gapsText ? `<br>${esc(gapsText)}` : ''}</div>
           </div>
-          <div class="fact">
-            <span class="label">Duração e BPM</span>
-            <div class="value">${dur.sec ? `<span class="dur">${esc(ui.durText(dur))}</span>` : '<span class="faint">—</span>'} ${ui.bpmBadge(bpm) || '<span class="faint">sem BPM</span>'}</div>
-            ${dur.overridden || bpm.overridden ? '<div class="note">Corrigido pela banda.</div>' : bpm.val && !bpm.confirmed ? '<div class="note">BPM a confirmar.</div>' : ''}
-          </div>
-          <div class="fact">
-            <span class="label">Mediana da banda</span>
-            <div class="value">${ui.score(median)}</div>
+          <div class="fact fact-median">
+            <span class="label">Mediana</span>
+            ${ui.score(median)}
           </div>
         </div>
-        ${note ? `<p class="dim" style="font-family:var(--font-body);font-size:14px;margin:10px 0 0">${esc(note)}</p>` : ''}
-        <div class="sheet-listen"><span class="label">Ouvir</span>${ui.listenLinks(id, { labels: true })}</div>
+        ${note ? `<p class="song-note">${esc(note)}</p>` : ''}
+        <div class="sheet-tools">
+          ${ui.listenLinks(id, { labels: true })}
+          <button type="button" class="btn btn-sm btn-edit${current.editing ? ' is-open' : ''}" data-toggle-edit aria-expanded="${current.editing}">
+            ${RH.icons.svg(current.editing ? 'close' : 'edit')}${current.editing ? 'Fechar' : 'Editar <span class="hide-narrow">afinação e instrumentação</span>'}
+          </button>
+        </div>
+        ${current.editing ? renderEditForm(id) : ''}
       </section>
       <section class="sheet-section">
         <h3>${RH.icons.svg('metronome')} Para ensaiar</h3>
@@ -271,13 +274,6 @@ RH.songSheet = (() => {
         </div>
         ${wanters.length ? `<p class="want-list">${RH.icons.svg('heart')} Querem tocar: ${wanters.map((m) => `<span class="inst-${esc(m.instrument)}">${ui.avatar(m)}${esc(m.name)}</span>`).join('')}</p>` : ''}
         <div data-metro-slot></div>
-      </section>
-      <section class="sheet-section">
-        <h3>${RH.icons.svg('wrench')} Corrigir dados
-          <button type="button" class="btn btn-sm btn-edit${current.editing ? ' is-open' : ''}" data-toggle-edit aria-expanded="${current.editing}">
-            ${RH.icons.svg(current.editing ? 'close' : 'edit')}${current.editing ? 'Fechar' : 'Editar <span class="hide-narrow">afinação e instrumentação</span>'}
-          </button></h3>
-        ${current.editing ? renderEditForm(id) : ''}
       </section>
       <section class="sheet-section">
         <h3>${RH.icons.svg('users')} Quanto cada um já tirou</h3>

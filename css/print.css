@@ -182,10 +182,6 @@
     font-size: 9pt;
   }
 
-  .sl-info .want {
-    display: none;
-  }
-
   /* Observações do músico escolhido, embaixo de cada música. */
   .sl-notes {
     display: block !important;

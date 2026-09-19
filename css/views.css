@@ -788,7 +788,7 @@
 
 .song-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 150px 300px 78px 46px;
+  grid-template-columns: minmax(0, 1fr) 150px 300px 40px 78px 46px;
   align-items: center;
   gap: 14px;
   min-height: 64px;
@@ -862,6 +862,24 @@
   min-width: 0;
 }
 
+/* Coluna de quem quer tocar (vazia quando ninguém marcou). */
+.song-likes {
+  display: flex;
+  justify-content: center;
+}
+
+.song-likes .want {
+  flex-direction: column;
+  gap: 0;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.song-likes .want .icon {
+  width: 20px;
+  height: 20px;
+}
+
 .sl-toggle {
   display: grid;
   place-items: center;
@@ -896,16 +914,17 @@
 
 @media (max-width: 899px) {
   .song-row {
-    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-columns: minmax(0, 1fr) auto auto auto;
     grid-template-areas:
-      'main score toggle'
-      'tech tech tech'
-      'bars bars bars';
+      'main likes score toggle'
+      'tech tech tech tech'
+      'bars bars bars bars';
     gap: 6px 10px;
     padding: 12px 6px;
   }
 
   .song-main { grid-area: main; }
+  .song-likes { grid-area: likes; }
   .song-row .score { grid-area: score; }
   .sl-toggle { grid-area: toggle; }
   .song-tech { grid-area: tech; }
@@ -959,10 +978,56 @@
   text-transform: none;
 }
 
+/* Três colunas: afinação e andamento | instrumentação | mediana. */
 .song-facts {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 104px;
+  grid-template-areas: 'tun ins med';
   gap: 10px;
+}
+
+.fact-tuning { grid-area: tun; }
+.fact-ins { grid-area: ins; }
+
+.fact-median {
+  grid-area: med;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.fact-median .label {
+  margin-bottom: 4px;
+}
+
+.fact-median .score {
+  align-items: center;
+}
+
+.fact .value + .value {
+  margin-top: 8px;
+}
+
+.fact-tempo {
+  gap: 8px;
+}
+
+@media (max-width: 479px) {
+  .song-facts {
+    grid-template-columns: minmax(0, 1fr) 92px;
+    grid-template-areas:
+      'tun med'
+      'ins ins';
+  }
+}
+
+.song-note {
+  margin: 10px 0 0;
+  color: var(--text-dim);
+  font-family: var(--font-body);
+  font-size: 14px;
 }
 
 .fact {
@@ -1174,11 +1239,23 @@
   stroke-width: 2.6;
 }
 
-/* Botão de edição dos dados da música. */
-.sheet-section > h3 .btn-edit {
+/* Ouvir (YouTube/Spotify) e editar os dados, na mesma linha. */
+.sheet-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.sheet-tools .btn-edit {
   margin-left: auto;
   font-size: 12px;
   letter-spacing: 0.08em;
+}
+
+.sheet-tools + .edit-grid {
+  margin-top: 10px;
 }
 
 .btn-edit .icon {
@@ -1189,21 +1266,6 @@
 
 .btn-edit.is-open .icon {
   color: var(--text-dim);
-}
-
-.sheet-listen {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 12px;
-  margin-top: 12px;
-}
-
-.sheet-listen .label {
-  color: var(--text-faint);
-  font-size: 12px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 
 /* Observação de cada músico. */
@@ -1671,7 +1733,7 @@
 
 .sl-row {
   display: grid;
-  grid-template-columns: 44px 34px minmax(0, 1fr) auto auto auto 74px auto;
+  grid-template-columns: 44px 34px minmax(0, 1fr) auto auto 74px auto;
   align-items: center;
   gap: 10px;
   min-height: 58px;
@@ -1726,10 +1788,6 @@
 .sl-song {
   min-width: 0;
   cursor: pointer;
-}
-
-.sl-listen-m {
-  display: none;
 }
 
 .sl-title {
@@ -1869,8 +1927,6 @@
   .sl-row .score .stars { display: none; }
   .sl-tech { grid-area: tech; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; min-width: 0; }
   .sl-tech .inst .icon { width: 15px; height: 15px; }
-  .sl-tech .listen { display: none; }
-  .sl-listen-m { display: block; margin-top: 6px; }
   .sl-actions { grid-area: actions; justify-content: flex-end; }
   .sl-title { font-size: 19px; white-space: normal; }
   .sl-row .score .num { font-size: 19px; }
@@ -2272,10 +2328,6 @@
   font-family: var(--font-body);
   font-size: 12px;
   font-variant-numeric: tabular-nums;
-}
-
-.paper .want {
-  color: #c2185b;
 }
 
 .sl-notes {

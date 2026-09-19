@@ -198,8 +198,9 @@ RH.views.catalog = (() => {
           <div class="song-title">${esc(song.t)} ${badgesFor(item)}</div>
           <div class="song-sub">${esc(song.a)} · ${song.y}${games}</div>
         </div>
-        <div class="song-tech">${ui.wantBadge(s.wanters(id).length, s.wants(id, s.me()))}${ui.listenLinks(id)}${ui.tuningBadge(s.tuning(id))}${ui.instruments(s, id)}</div>
+        <div class="song-tech">${ui.tuningBadge(s.tuning(id))}${ui.instruments(s, id)}</div>
         <div class="song-bars${members.length > 4 ? ' is-many' : ''}">${bars}</div>
+        <div class="song-likes">${ui.wantBadge(s.wanters(id).length, s.wants(id, s.me()))}</div>
         ${ui.score(s.median(id))}
         <button type="button" class="sl-toggle" data-toggle aria-pressed="${inSet}" title="${inSet ? 'Tirar do set list' : 'Adicionar ao set list'}" aria-label="${inSet ? 'Tirar do set list' : 'Adicionar ao set list'}">
           ${RH.icons.svg(inSet ? 'check' : 'plus')}
@@ -502,7 +503,6 @@ RH.views.catalog = (() => {
 
   const onClick = (e) => {
     if (onInsClick(e)) return;
-    if (e.target.closest("a[data-listen]")) return; // YouTube/Spotify: só o link, sem abrir o painel
     const toggle = e.target.closest('[data-toggle]');
     if (toggle) {
       const id = toggle.closest('.song-row').dataset.id;

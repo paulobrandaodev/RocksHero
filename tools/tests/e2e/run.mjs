@@ -143,20 +143,19 @@ await step('observação de um músico digitada no A aparece no B', async () => 
   await pageB.keyboard.press('Escape');
 });
 
-await step('botões do YouTube e do Spotify apontam para a busca e não abrem o painel', async () => {
-  const links = await pageA.$$eval(`.song-row[data-id="${SONG_A}"] a[data-listen]`, (els) => els.map((a) => ({ href: a.href, target: a.target })));
-  if (links.length !== 2) throw new Error(`esperava 2 links, veio ${links.length}`);
-  if (!links[0].href.startsWith('https://www.youtube.com/results?search_query=')) throw new Error(links[0].href);
-  if (!links[1].href.startsWith('https://open.spotify.com/search/')) throw new Error(links[1].href);
-  if (links.some((l) => l.target !== '_blank')) throw new Error('links devem abrir em nova guia');
-  // Clique no YouTube sem sair da página: a nova guia é bloqueada e o painel não pode abrir.
-  await pageA.evaluate((id) => {
-    const a = document.querySelector(`.song-row[data-id="${id}"] a[data-listen="youtube"]`);
-    a.addEventListener('click', (e) => e.preventDefault(), { once: true });
-    a.click();
-  }, SONG_A);
-  await new Promise((r) => setTimeout(r, 300));
-  if (await pageA.$('.song-sheet.is-open')) throw new Error('o clique no link abriu o painel da música');
+await step('YouTube e Spotify só no painel da música, ao lado do botão de editar', async () => {
+  assert.equal(await pageA.$('.song-row a[data-listen]'), null, 'a lista não tem mais os botões');
+  await pageA.click(`.song-row[data-id="${SONG_A}"]`);
+  await pageA.waitForSelector('.song-sheet.is-open .sheet-tools a[data-listen]');
+  const links = await pageA.$$eval('.song-sheet.is-open .sheet-tools a[data-listen]', (els) => els.map((a) => ({ href: a.href, target: a.target })));
+  assert.equal(links.length, 2);
+  assert.ok(links[0].href.startsWith('https://www.youtube.com/results?search_query='), links[0].href);
+  assert.ok(links[1].href.startsWith('https://open.spotify.com/search/'), links[1].href);
+  assert.ok(links.every((l) => l.target === '_blank'), 'links devem abrir em nova guia');
+  assert.ok(await pageA.$('.song-sheet.is-open .sheet-tools [data-toggle-edit]'), 'editar fica na mesma linha');
+  await pageA.screenshot({ path: join(artifacts, 'painel-topo.png') });
+  await pageA.keyboard.press('Escape');
+  await pageA.waitForFunction(() => !document.querySelector('.song-sheet.is-open'));
 });
 
 await step('slider no painel grava ao soltar', async () => {
@@ -479,6 +478,12 @@ await step('Modo Palco no celular (retrato)', async () => {
   await page.evaluate(() => RH.store.selectSetlist('main'));
   await page.waitForSelector('[data-stage]:not([disabled])');
   await page.screenshot({ path: join(artifacts, 'setlist-celular.png'), fullPage: true });
+  await page.evaluate((id) => RH.songSheet.open(id), setSongs[0]);
+  await page.waitForSelector('.song-sheet.is-open .sheet-tools');
+  await sleep(400);
+  await page.screenshot({ path: join(artifacts, 'painel-celular.png') });
+  await page.keyboard.press('Escape');
+  await page.waitForFunction(() => !document.querySelector('.song-sheet.is-open'));
   await page.click('[data-stage]');
   await page.waitForFunction(() => /Linha 1 de/.test(document.querySelector('.stage .lyrics-body').textContent), { timeout: 10000 });
   // deslizar para a esquerda na área da música avança
@@ -541,6 +546,10 @@ await step('quero tocar, metrônomo e correção do BPM no painel da música', a
   await pageF.waitForFunction((songId) => document.querySelector(`.song-row[data-id="${songId}"] .want.is-mine`), { timeout: 15000 }, id);
   await pageF.select('[data-filter="sort"]', 'priority');
   await pageF.waitForFunction((songId) => { const r = document.querySelector('.song-row'); return r && r.dataset.id === songId; }, { timeout: 15000 }, id);
+  // coluna própria dos likes, antes da mediana
+  const cols = await pageF.$eval('.song-row', (row) => [...row.children].map((c) => c.className.split(' ')[0]));
+  assert.equal(cols[cols.indexOf('score') - 1], 'song-likes');
+  await pageF.screenshot({ path: join(artifacts, 'catalogo-likes.png') });
   await pageF.select('[data-filter="sort"]', 'game');
 });
 

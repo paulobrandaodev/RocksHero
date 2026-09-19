@@ -1,5 +1,5 @@
 /* Service worker: o app abre mesmo sem internet (os dados sincronizam quando a conexão volta). */
-const VERSION = '1.2.0';
+const VERSION = '1.2.1';
 const CACHE = `rocks-hero-${VERSION}`;
 
 const ASSETS = [
