@@ -6,22 +6,22 @@ Legenda: **Esforço** P (pequeno, até 1 dia), M (alguns dias), G (1 semana ou m
 
 ## Resumo
 
-| # | Ideia | Esforço | Valor |
-|---|-------|:-------:|:-----:|
-| 1 | Modo Palco (tela do show) | M | Alto |
-| 2 | Reordenar o set list para trocar menos de afinação | P | Alto |
-| 3 | Duração das músicas e tempo total do set | M | Alto |
-| 4 | Vários set lists (show, ensaio, acústico) e histórico de shows | M | Alto |
-| 5 | Imprimir o set list com as observações de cada músico | P | Médio |
-| 6 | "Quero tocar": votação interna da banda | P | Médio |
-| 7 | Diário de ensaio e evolução do progresso | M | Médio |
-| 8 | Links de cifra e tablatura | P | Médio |
-| 9 | BPM, tom e metrônomo | M | Médio |
-| 10 | Membro com mais de um instrumento | M | Médio |
-| 11 | Feed de atividade da banda | M | Baixo/Médio |
-| 12 | Metas com prazo | P | Médio |
-| 13 | Conquistas no estilo Guitar Hero | M | Diversão |
-| 14 | Busca nas observações e marcador na lista | P | Médio |
+| # | Ideia | Esforço | Valor | Situação |
+|---|-------|:-------:|:-----:|----------|
+| 1 | Modo Palco (tela do show) | M | Alto | Feito na 1.2.0 (com letra e rolagem pelo BPM) |
+| 2 | Reordenar o set list para trocar menos de afinação | P | Alto | Feito na 1.2.0 |
+| 3 | Duração das músicas e tempo total do set | M | Alto | Feito na 1.2.0 |
+| 4 | Vários set lists (show, ensaio, acústico) e histórico de shows | M | Alto | Feito na 1.2.0 |
+| 5 | Imprimir o set list com as observações de cada músico | P | Médio | Feito na 1.2.0 |
+| 6 | "Quero tocar": votação interna da banda | P | Médio | Feito na 1.2.0 |
+| 7 | Diário de ensaio e evolução do progresso | M | Médio | Feito na 1.2.0 |
+| 8 | Links de cifra e tablatura | P | Médio |  |
+| 9 | BPM, tom e metrônomo | M | Médio | BPM e metrônomo feitos na 1.2.0; falta o tom |
+| 10 | Membro com mais de um instrumento | M | Médio |  |
+| 11 | Feed de atividade da banda | M | Baixo/Médio |  |
+| 12 | Metas com prazo | P | Médio |  |
+| 13 | Conquistas no estilo Guitar Hero | M | Diversão |  |
+| 14 | Busca nas observações e marcador na lista | P | Médio |  |
 
 ---
 

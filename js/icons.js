@@ -87,6 +87,21 @@ RH.icons = (() => {
     filter: '<path d="M3.5 5h17l-6.5 8v6l-4 1.5V13z"/>',
     external: '<path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6"/>',
     share: '<circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.3 10.8l7.4-4.4M8.3 13.2l7.4 4.4"/>',
+    left: '<path d="M15 6l-6 6 6 6"/>',
+    heart: '<path d="M12 20s-7.5-4.6-7.5-10.2A4.2 4.2 0 0 1 12 7.2a4.2 4.2 0 0 1 7.5 2.6C19.5 15.4 12 20 12 20z"/>',
+    play: '<path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/>',
+    pause: '<path d="M8.5 5.5v13M15.5 5.5v13" stroke-width="3.2"/>',
+    calendar: '<rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
+    clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+    metronome: '<path d="M9 3.5h6l4 17H5z"/><path d="M12 16.5l5.5-9M8.5 16.5h7"/>',
+    lyrics: '<path d="M4 6h16M4 10.5h16M4 15h9M4 19.5h6"/><circle cx="17.5" cy="18.5" r="2"/><path d="M19.5 18.5V12"/>',
+    stage: '<path d="M9.5 3h5l-.8 4h-3.4z"/><path d="M10.3 7L4 20.5h16L13.7 7"/>',
+    wand: '<path d="M4 20L15 9M13 4v3M19 10h3M16.5 5.5l2-2M17.5 3.5L20.5 6.5"/>',
+    copy: '<rect x="8.5" y="8.5" width="11.5" height="11.5" rx="2"/><path d="M15.5 8.5V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v9.5a1 1 0 0 0 1 1h3.5"/>',
+    chart: '<path d="M4 4v16h16"/><path d="M7.5 15l4-5 3 3 5-6"/>',
+    expand: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
+    text: '<path d="M3.5 18L8.5 6l5 12M5.2 14h6.6M14.5 18l3-7 3 7M15.3 16h4.4"/>',
+    reset: '<path d="M4.5 12a7.5 7.5 0 1 0 2.3-5.4M4.5 4.5v4h4"/>',
   };
 
   const toDataUri = (body) =>

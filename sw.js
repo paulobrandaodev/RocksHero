@@ -1,5 +1,5 @@
 /* Service worker: o app abre mesmo sem internet (os dados sincronizam quando a conexão volta). */
-const VERSION = '1.1.0';
+const VERSION = '1.2.0';
 const CACHE = `rocks-hero-${VERSION}`;
 
 const ASSETS = [
@@ -9,8 +9,10 @@ const ASSETS = [
   'css/fonts.css', 'css/base.css', 'css/components.css', 'css/views.css', 'css/print.css',
   'js/version.js', 'js/constants.js', 'js/util.js', 'js/firebase-config.js',
   'js/sync-local.js', 'js/sync-firebase.js', 'js/store.js', 'js/icons.js', 'js/ui.js',
-  'js/song-sheet.js', 'js/catalog.js', 'js/dnd.js', 'js/setlist.js', 'js/band.js', 'js/login.js', 'js/app.js',
-  'data/songs.js', 'data/games.js', 'data/song-meta.js',
+  'js/chart.js', 'js/lyrics.js', 'js/metronome.js',
+  'js/song-sheet.js', 'js/catalog.js', 'js/dnd.js', 'js/setlist.js', 'js/stage.js', 'js/rehearsals.js',
+  'js/band.js', 'js/login.js', 'js/app.js',
+  'data/songs.js', 'data/games.js', 'data/song-meta.js', 'data/song-extra.js',
   'vendor/firebase-rh.js',
   'assets/fonts/metal-mania-latin.woff2', 'assets/fonts/metal-mania-latin-ext.woff2',
   'assets/fonts/oswald-latin.woff2', 'assets/fonts/oswald-latin-ext.woff2',

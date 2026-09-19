@@ -21,6 +21,10 @@
   .sheet,
   .sheet-backdrop,
   .setlist-summary,
+  .setlist-history,
+  .sl-picker,
+  .sl-meta,
+  .stage,
   .sl-grip,
   .sl-actions,
   .you-rock,
@@ -171,6 +175,25 @@
 
   .sl-change .icon {
     color: #000;
+  }
+
+  .sl-info {
+    color: #333;
+    font-size: 9pt;
+  }
+
+  .sl-info .want {
+    display: none;
+  }
+
+  /* Observações do músico escolhido, embaixo de cada música. */
+  .sl-notes {
+    display: block !important;
+    margin: 0 0 2.5mm 16mm;
+    padding: 1mm 0 1mm 3mm;
+    border-left: 1.5pt solid #000;
+    color: #000;
+    font-size: 12pt;
   }
 
   .empty {

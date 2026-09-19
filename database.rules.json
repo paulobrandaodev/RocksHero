@@ -38,6 +38,12 @@
         "$list": {
           ".validate": "$list.matches(/^[a-z0-9-]+$/) && $list.length <= 40",
           "name": { ".validate": "newData.isString() && newData.val().length <= 80" },
+          "kind": { ".validate": "newData.isString() && newData.val().matches(/^(show|ensaio|acustico|outro)$/)" },
+          "date": { ".validate": "newData.isString() && (newData.val() === '' || newData.val().matches(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/))" },
+          "played": { ".validate": "newData.isBoolean()" },
+          "limit": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 600" },
+          "gap": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 600" },
+          "created": { ".validate": "newData.isNumber() && newData.val() <= now + 600000" },
           "items": {
             "$song": {
               ".validate": "$song.matches(/^[a-z0-9-]+$/) && $song.length <= 120 && newData.hasChildren(['pos', 't'])",
@@ -67,6 +73,20 @@
             "by": { ".validate": "newData.isString() && newData.val().length <= 42" },
             "$other": { ".validate": false }
           },
+          "dur": {
+            ".validate": "newData.hasChildren(['val', 't'])",
+            "val": { ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 3600" },
+            "t": { ".validate": "newData.isNumber() && newData.val() <= now + 600000" },
+            "by": { ".validate": "newData.isString() && newData.val().length <= 42" },
+            "$other": { ".validate": false }
+          },
+          "bpm": {
+            ".validate": "newData.hasChildren(['val', 't'])",
+            "val": { ".validate": "newData.isNumber() && newData.val() >= 20 && newData.val() <= 300" },
+            "t": { ".validate": "newData.isNumber() && newData.val() <= now + 600000" },
+            "by": { ".validate": "newData.isString() && newData.val().length <= 42" },
+            "$other": { ".validate": false }
+          },
           "$other": { ".validate": false }
         }
       },
@@ -81,6 +101,47 @@
             "by": { ".validate": "newData.isString() && newData.val().length <= 42" },
             "$other": { ".validate": false }
           }
+        }
+      },
+
+      "wants": {
+        "$song": {
+          ".validate": "$song.matches(/^[a-z0-9-]+$/) && $song.length <= 120",
+          "$member": {
+            ".validate": "$member.matches(/^m-[a-z0-9-]+$/) && $member.length <= 42 && newData.hasChildren(['v', 't'])",
+            "v": { ".validate": "newData.val() === true" },
+            "t": { ".validate": "newData.isNumber() && newData.val() <= now + 600000" },
+            "$other": { ".validate": false }
+          }
+        }
+      },
+
+      "history": {
+        "$song": {
+          ".validate": "$song.matches(/^[a-z0-9-]+$/) && $song.length <= 120",
+          "$member": {
+            ".validate": "$member.matches(/^m-[a-z0-9-]+$/) && $member.length <= 42",
+            "$day": {
+              ".validate": "$day.matches(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/) && newData.hasChildren(['v', 't'])",
+              "v": { ".validate": "newData.val() === 'na' || (newData.isNumber() && newData.val() >= 0 && newData.val() <= 100)" },
+              "t": { ".validate": "newData.isNumber() && newData.val() <= now + 600000" },
+              "$other": { ".validate": false }
+            }
+          }
+        }
+      },
+
+      "rehearsals": {
+        "$rehearsal": {
+          ".validate": "$rehearsal.matches(/^r-[a-z0-9]+$/) && $rehearsal.length <= 42 && newData.hasChildren(['date', 't'])",
+          "date": { ".validate": "newData.isString() && newData.val().matches(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/)" },
+          "note": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 1000" },
+          "songs": {
+            "$song": { ".validate": "$song.matches(/^[a-z0-9-]+$/) && $song.length <= 120 && newData.val() === true" }
+          },
+          "t": { ".validate": "newData.isNumber() && newData.val() <= now + 600000" },
+          "by": { ".validate": "newData.isString() && newData.val().length <= 42" },
+          "$other": { ".validate": false }
         }
       },
 

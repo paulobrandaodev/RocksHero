@@ -111,7 +111,7 @@ RH.views.band = (() => {
           </label>
 
           <h2 class="fire-text" style="margin-top:12px">Backup</h2>
-          <p>Baixe uma cópia de tudo (progresso, set list, correções). Importar mescla com o que já existe, ficando sempre a edição mais recente.</p>
+          <p>Baixe uma cópia de tudo (progresso e histórico, set lists, ensaios, observações, "quero tocar" e correções). Importar mescla com o que já existe, ficando sempre a edição mais recente.</p>
           <div class="summary-actions">
             <button type="button" class="btn" data-export>${RH.icons.svg('download')} Exportar</button>
             <label class="btn">${RH.icons.svg('upload')} Importar<input type="file" accept="application/json,.json" data-import hidden></label>

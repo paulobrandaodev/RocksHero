@@ -70,3 +70,24 @@ test('afinação: códigos conhecidos, livres e desconhecida', () => {
   assert.equal(RH.tuningInfo('other:C# aberta').short, 'C# aberta');
   assert.equal(RH.tuningInfo(null).unknown, true);
 });
+
+test('datas AAAA-MM-DD: dia local, intervalo e início do dia', () => {
+  assert.equal(U.dayKey(new Date(2026, 0, 5, 23, 59).getTime()), '2026-01-05');
+  assert.deepEqual(plain(U.dayRange('2026-02-27', '2026-03-02')), ['2026-02-27', '2026-02-28', '2026-03-01', '2026-03-02']);
+  assert.deepEqual(plain(U.dayRange('2026-03-02', '2026-03-01')), []);
+  assert.equal(U.dayStart('2026-03-02'), new Date(2026, 2, 2).getTime());
+});
+
+test('duração: formata e lê m:ss, h:mm:ss e só minutos', () => {
+  assert.equal(U.formatDuration(225), '3:45');
+  assert.equal(U.formatDuration(3725), '1:02:05');
+  assert.equal(U.formatDuration(-65), '-1:05');
+  assert.equal(U.formatDuration(null), '');
+  assert.equal(U.parseDuration('3:45'), 225);
+  assert.equal(U.parseDuration('1:02:05'), 3725);
+  assert.equal(U.parseDuration('4'), 240);
+  assert.equal(U.parseDuration(''), null);
+  assert.ok(Number.isNaN(U.parseDuration('3m45')));
+  assert.equal(U.formatMinutes(3480), '58 min');
+  assert.equal(U.formatMinutes(4020), '1 h 07 min');
+});

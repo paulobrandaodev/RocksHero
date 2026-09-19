@@ -197,12 +197,13 @@ test('edição offline sobrevive a recarregar a página e sincroniza ao voltar a
   second.store.start();
   await tick();
   assert.equal(second.store.progress('band--full', 'm-baixo').v, 45, 'edição aparece a partir do diário');
-  assert.equal(second.store.status.pending, 1);
+  assert.equal(second.store.status.pending, 2, 'progresso + histórico do dia');
 
   second.adapter.goOnline();
   await tick();
   await tick();
   assert.equal(server.tree.progress['band--full']['m-baixo'].v, 45);
+  assert.equal(Object.values(server.tree.history['band--full']['m-baixo'])[0].v, 45);
   assert.equal(second.store.status.pending, 0);
 });
 

@@ -44,6 +44,20 @@ RH.ui = (() => {
     return `<span class="${classes.join(' ')}" data-step="${info.step}" title="${esc(title)}">${esc(info.short)}</span>`;
   };
 
+  // BPM da música (com "?" quando a confirmar) e duração.
+  const bpmBadge = (b) => {
+    if (!b || !b.val) return '';
+    const title = `${b.val} BPM${b.confirmed ? '' : ' (a confirmar)'}${b.overridden ? ' · corrigido pela banda' : ''}`;
+    return `<span class="bpm${b.confirmed ? '' : ' is-unconfirmed'}" title="${esc(title)}">${b.val}<small>bpm</small></span>`;
+  };
+
+  const durText = (d) => (d && d.sec ? U.formatDuration(d.sec) : '');
+
+  // Quantos querem tocar (chama acesa quando você também quer).
+  const wantBadge = (n, mine) => (n
+    ? `<span class="want${mine ? ' is-mine' : ''}" title="${n} ${n > 1 ? 'membros querem' : 'membro quer'} tocar${mine ? ' (você também)' : ''}">${RH.icons.svg('heart')}${n}</span>`
+    : '');
+
   const insText = (counts) => {
     if (!counts) return 'Instrumentação desconhecida';
     const parts = RH.PARTS.filter((p) => counts[p.key] > 0)
@@ -346,7 +360,7 @@ RH.ui = (() => {
 
   return {
     $, $$, esc, GAME_MARKS, TIER_COLORS,
-    levelClass, stars, score, emblem, tuningBadge, insText, instruments, listenLinks, memberIcon, avatar, memberBar,
+    levelClass, stars, score, emblem, tuningBadge, bpmBadge, durText, wantBadge, insText, instruments, listenLinks, memberIcon, avatar, memberBar,
     rockMeter, formatWhen, toast, sheet, confirm, download,
   };
 })();

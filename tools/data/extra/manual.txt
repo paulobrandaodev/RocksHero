@@ -1,0 +1,59 @@
+# Correções à mão da duração e do BPM (valem por cima do Deezer e do LRCLIB).
+# id | duração (m:ss, vazio = manter) | BPM (vazio = manter) | observação
+# BPM escrito aqui entra como "a confirmar" no app (a banda confirma corrigindo no painel da música).
+#
+# Andamento dobrado ou pela metade no Deezer:
+metallica--master-of-puppets||212|Deezer deu a metade (106)
+lynyrd-skynyrd--sweet-home-alabama||98|Deezer deu o dobro (196)
+stevie-wonder--superstition||100|Deezer deu o dobro (201)
+the-black-crowes--hard-to-handle|3:09|99|Deezer deu o dobro (198) e achou versão estendida
+the-jackson-5--abc||94|Deezer deu o dobro (187)
+sublime--santeria||91|Deezer deu o dobro (181)
+no-doubt--dont-speak||76|Deezer deu o dobro (152)
+the-lumineers--ho-hey||80|Deezer deu o dobro (160)
+#
+# Duração: o Deezer achou versão ao vivo, estendida ou editada (conferido com o LRCLIB e a gravação original):
+sex-pistols--anarchy-in-the-uk|3:32||
+stray-cats--rock-this-town|3:25||
+king-crimson--21st-century-schizoid-man|7:21||
+mc5--kick-out-the-jams|2:52||
+filter--hey-man-nice-shot|5:15||
+metallica--creeping-death|6:36||
+eagles-of-death-metal--wannabe-in-la|2:16||
+wolfmother--woman|2:56||
+bloc-party--helicopter|3:40||
+the-who--wont-get-fooled-again|8:32||
+village-people--ymca|4:48|127|
+#
+# Sem BPM no Deezer (andamento conhecido da gravação original):
+aerosmith--dream-on||80|
+aerosmith--sweet-emotion||100|
+aerosmith--toys-in-the-attic||172|
+aerosmith--last-child||94|
+aerosmith-featuring-run-dmc--walk-this-way||106|
+black-sabbath--iron-man||76|
+black-sabbath--paranoid||164|
+dragonforce--through-the-fire-and-flames||200|
+dragonforce--fury-of-the-storm||200|
+metallica--enter-sandman||123|
+metallica--sad-but-true||88|
+metallica--nothing-else-matters||69|
+queen--bohemian-rhapsody||72|varia muito ao longo da música
+queen-and-david-bowie--under-pressure||114|
+kiss--rock-and-roll-all-nite||144|
+joan-jett-and-the-blackhearts--i-love-rock-n-roll||94|
+the-white-stripes--seven-nation-army||124|
+system-of-a-down--toxicity||117|
+linkin-park--what-ive-done||120|
+linkin-park--bleed-it-out||140|
+finger-eleven--paralyzer||106|
+fountains-of-wayne--stacys-mom||118|
+blondie--one-way-or-another||162|
+the-killers--when-you-were-young||131|
+the-raconteurs--steady-as-she-goes||124|
+vampire-weekend--a-punk||175|
+mumford-and-sons--i-will-wait||132|
+lenny-kravitz--are-you-gonna-go-my-way||120|
+eminem--berzerk||95|
+katy-perry--waking-up-in-vegas||132|
+the-all-american-rejects--dirty-little-secret||144|

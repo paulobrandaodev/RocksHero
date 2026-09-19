@@ -81,6 +81,14 @@ RH.DEFAULT_MEMBERS = [
   { id: 'm-bateria',  name: 'Bateria',  instrument: 'bateria',  order: 4 },
 ];
 
+// Tipos de set list.
+RH.SETLIST_KINDS = {
+  show:     { name: 'Show' },
+  ensaio:   { name: 'Ensaio' },
+  acustico: { name: 'Acústico' },
+  outro:    { name: 'Outro' },
+};
+
 // Faixas do rock meter e estrelas.
 RH.meterLevel = (pct) => {
   if (pct >= 80) return 'green';

@@ -26,10 +26,50 @@ RH.songSheet = (() => {
     return `<option value=""${code == null ? ' selected' : ''}>Desconhecida</option>${known}<option value="__other"${isOther ? ' selected' : ''}>Outra…</option>`;
   };
 
+  // Progresso de cada membro dia a dia (para o gráfico de evolução da música).
+  const songTimeline = (id) => {
+    const s = store();
+    const U = RH.util;
+    const perMember = s.members().map((m) => ({ m, points: s.progressHistory(id, m.id) })).filter((x) => x.points.length);
+    const allDays = perMember.flatMap((x) => x.points.map((p) => p.day));
+    if (new Set(allDays).size < 2) return null;
+    const today = U.dayKey(s.now());
+    const yearAgo = U.dayKey(s.now() - 365 * 86400000);
+    const first = allDays.sort()[0];
+    const days = U.dayRange(first < yearAgo ? yearAgo : first, today);
+    const series = perMember.map(({ m, points }) => {
+      let k = 0;
+      let v = 0;
+      const values = days.map((day) => {
+        for (; k < points.length && points[k].day <= day; k++) v = typeof points[k].v === 'number' ? points[k].v : 0;
+        return v;
+      });
+      return { id: m.id, name: m.name, instrument: m.instrument, values };
+    });
+    return { days, series };
+  };
+
+  const historyHtml = (id) => {
+    const s = store();
+    const U = RH.util;
+    const plays = s.songPlays(id);
+    const reh = s.songRehearsals(id);
+    const lines = [];
+    lines.push(plays.count
+      ? `Tocada em <b>${plays.count}</b> show${plays.count > 1 ? 's' : ''}. Último: ${RH.ui.esc(plays.last.name || 'sem nome')}${plays.last.date ? ` (${U.formatDay(plays.last.date)})` : ''}.`
+      : 'Ainda não entrou em nenhum show realizado.');
+    lines.push(reh.length
+      ? `Passada em <b>${reh.length}</b> ensaio${reh.length > 1 ? 's' : ''}. Último: ${U.formatDay(reh[0].date)}.`
+      : 'Nenhum ensaio registrado com ela.');
+    return `<p class="song-history">${lines.join('<br>')}</p>`;
+  };
+
   const renderEditForm = (id) => {
     const s = store();
     const t = s.tuning(id);
     const ins = s.instrumentation(id);
+    const dur = s.duration(id);
+    const bpm = s.bpm(id);
     const counts = ins.counts || RH.parseIns('');
     const otherText = t.code && !RH.TUNINGS[t.code] ? RH.tuningInfo(t.code).label : '';
     const steppers = RH.PARTS.map((p) => `
@@ -53,10 +93,20 @@ RH.songSheet = (() => {
           <span>Instrumentação da gravação original</span>
           <div class="steppers">${steppers}</div>
         </div>
+        <div class="edit-pair">
+          <label class="field">
+            <span>Duração (m:ss)</span>
+            <input class="input" name="dur" value="${esc(dur.sec ? RH.util.formatDuration(dur.sec) : '')}" placeholder="ex.: 3:45" autocomplete="off">
+          </label>
+          <label class="field">
+            <span>BPM</span>
+            <input class="input" name="bpm" type="number" inputmode="numeric" min="20" max="300" value="${bpm.val || ''}" placeholder="ex.: 120">
+          </label>
+        </div>
         <div class="edit-actions">
           <button type="submit" class="btn btn-fire">${RH.icons.svg('check')} Salvar</button>
           <button type="button" class="btn btn-ghost" data-cancel-edit>Cancelar</button>
-          ${t.overridden || ins.overridden ? '<button type="button" class="btn btn-ghost" data-reset-edit>Restaurar original</button>' : ''}
+          ${t.overridden || ins.overridden || dur.overridden || bpm.overridden ? '<button type="button" class="btn btn-ghost" data-reset-edit>Restaurar original</button>' : ''}
         </div>
       </form>`;
   };
@@ -180,6 +230,13 @@ RH.songSheet = (() => {
         </div>` : '';
 
     const inSet = s.inSetlist(id);
+    const dur = s.duration(id);
+    const bpm = s.bpm(id);
+    const me = s.me();
+    const wanters = s.wanters(id);
+    const iWant = s.wants(id, me);
+    const timeline = songTimeline(id);
+    const listName = s.setlist().name || 'set list';
     const body = `
       <section class="sheet-section">
         <div class="song-facts">
@@ -194,12 +251,26 @@ RH.songSheet = (() => {
             <div class="note">${esc(ui.insText(ins.counts))}${gapsText ? `<br>${esc(gapsText)}` : ''}</div>
           </div>
           <div class="fact">
+            <span class="label">Duração e BPM</span>
+            <div class="value">${dur.sec ? `<span class="dur">${esc(ui.durText(dur))}</span>` : '<span class="faint">—</span>'} ${ui.bpmBadge(bpm) || '<span class="faint">sem BPM</span>'}</div>
+            ${dur.overridden || bpm.overridden ? '<div class="note">Corrigido pela banda.</div>' : bpm.val && !bpm.confirmed ? '<div class="note">BPM a confirmar.</div>' : ''}
+          </div>
+          <div class="fact">
             <span class="label">Mediana da banda</span>
             <div class="value">${ui.score(median)}</div>
           </div>
         </div>
         ${note ? `<p class="dim" style="font-family:var(--font-body);font-size:14px;margin:10px 0 0">${esc(note)}</p>` : ''}
         <div class="sheet-listen"><span class="label">Ouvir</span>${ui.listenLinks(id, { labels: true })}</div>
+      </section>
+      <section class="sheet-section">
+        <h3>${RH.icons.svg('metronome')} Para ensaiar</h3>
+        <div class="practice-actions">
+          <button type="button" class="btn" data-lyrics>${RH.icons.svg('lyrics')} Letra</button>
+          <button type="button" class="btn want-btn" data-want aria-pressed="${iWant}" title="${me ? '' : 'Escolha quem é você para marcar'}">${RH.icons.svg('heart')} ${iWant ? 'Quero tocar!' : 'Quero tocar'}</button>
+        </div>
+        ${wanters.length ? `<p class="want-list">${RH.icons.svg('heart')} Querem tocar: ${wanters.map((m) => `<span class="inst-${esc(m.instrument)}">${ui.avatar(m)}${esc(m.name)}</span>`).join('')}</p>` : ''}
+        <div data-metro-slot></div>
       </section>
       <section class="sheet-section">
         <h3>${RH.icons.svg('wrench')} Corrigir dados
@@ -215,18 +286,37 @@ RH.songSheet = (() => {
         ${othersHtml}
       </section>
       <section class="sheet-section">
+        <h3>${RH.icons.svg('chart')} Evolução</h3>
+        ${timeline ? '<div data-chart></div>' : '<p class="dim small">O gráfico aparece quando o progresso for registrado em dias diferentes.</p>'}
+        ${historyHtml(id)}
+      </section>
+      <section class="sheet-section">
         <h3>${RH.icons.svg('music')} Aparece em</h3>
         <div class="games-chips">${games}</div>
       </section>
       <div class="sheet-footer">
         <button type="button" class="btn ${inSet ? 'btn-ghost' : 'btn-fire'}" data-toggle-setlist>
-          ${RH.icons.svg(inSet ? 'close' : 'plus')} ${inSet ? 'Tirar do set list' : 'Adicionar ao set list'}
+          ${RH.icons.svg(inSet ? 'close' : 'plus')} ${inSet ? 'Tirar de' : 'Adicionar a'} “${esc(listName)}”
         </button>
       </div>`;
 
     const scrollTop = current.sheet.body.scrollTop;
     current.sheet.setTitle(song.t, `${song.a} · ${song.y}`);
+    if (current.chart) current.chart.destroy();
+    current.chart = null;
     current.sheet.body.innerHTML = body;
+    // O metrônomo é o mesmo nó entre renderizações (continua tocando).
+    if (!current.metroEl) {
+      current.metroEl = document.createElement('div');
+      current.metro = RH.metronome.mount(current.metroEl, { bpm: bpm.val });
+      current.metroBpm = bpm.val;
+    } else if (current.metroBpm !== bpm.val && !current.metro.isRunning()) {
+      current.metro.setTempo(bpm.val || 120);
+      current.metroBpm = bpm.val;
+    }
+    current.sheet.body.querySelector('[data-metro-slot]').replaceWith(current.metroEl);
+    const chartEl = current.sheet.body.querySelector('[data-chart]');
+    if (chartEl && timeline) current.chart = RH.chart.timeline(chartEl, timeline, { percent: true, height: 180, label: `Evolução de ${song.t} por membro` });
     current.sheet.body.scrollTop = scrollTop;
     current.pendingRender = false;
   };
@@ -257,6 +347,18 @@ RH.songSheet = (() => {
       const raw = setBtn.dataset.set;
       return setProgress(raw === 'na' || raw === 'clear' ? raw : Number(raw));
     }
+    if (target.closest('[data-lyrics]')) return RH.lyrics.openSheet(current.id);
+    if (target.closest('[data-want]')) {
+      const me = s.me();
+      if (!me) {
+        ui.toast('Escolha quem é você para marcar');
+        return RH.app.openWhoAmI();
+      }
+      const on = !s.wants(current.id, me);
+      s.setWant(current.id, me, on);
+      if (on) ui.toast('Anotado: você quer tocar essa!', { kind: 'rock' });
+      return;
+    }
     if (target.closest('[data-toggle-setlist]')) {
       if (s.inSetlist(current.id)) {
         s.removeFromSetlist(current.id);
@@ -272,8 +374,9 @@ RH.songSheet = (() => {
       return render();
     }
     if (target.closest('[data-reset-edit]')) {
-      s.setOverride(current.id, 'tun', undefined);
-      s.setOverride(current.id, 'ins', undefined);
+      for (const field of ['tun', 'ins', 'dur', 'bpm']) {
+        if (s.state.overrides && s.state.overrides[current.id] && s.state.overrides[current.id][field]) s.setOverride(current.id, field, undefined);
+      }
       current.editing = false;
       ui.toast('Dados originais restaurados');
       return render();
@@ -301,8 +404,28 @@ RH.songSheet = (() => {
     const counts = {};
     form.querySelectorAll('.stepper').forEach((box) => { counts[box.dataset.part] = Number(box.querySelector('b').textContent); });
     const insVal = RH.formatIns(counts);
+    const durVal = RH.util.parseDuration(form.dur.value);
+    const bpmVal = form.bpm.value.trim() ? Math.round(Number(form.bpm.value)) : null;
+    if (Number.isNaN(durVal) || (durVal != null && (durVal < 1 || durVal > 3600))) {
+      ui.toast('Duração no formato m:ss, ex.: 3:45', { kind: 'error' });
+      return form.dur.focus();
+    }
+    if (bpmVal != null && !(bpmVal >= 20 && bpmVal <= 300)) {
+      ui.toast('BPM entre 20 e 300', { kind: 'error' });
+      return form.bpm.focus();
+    }
     const t = s.tuning(current.id);
     const ins = s.instrumentation(current.id);
+    // Duração/BPM: igual ao original tira a correção; vazio também.
+    const numeric = (field, info, val, cur) => {
+      if (val === cur) return;
+      if (val == null || val === info.base) { if (info.overridden) s.setOverride(current.id, field, undefined); return; }
+      s.setOverride(current.id, field, val);
+    };
+    const dur = s.duration(current.id);
+    const bpm = s.bpm(current.id);
+    numeric('dur', dur, durVal, dur.sec);
+    numeric('bpm', bpm, bpmVal, bpm.val);
     if ((tuningVal || null) !== (t.code || null) || (t.overridden === false && !t.confirmed && tuningVal)) s.setOverride(current.id, 'tun', tuningVal);
     if (insVal !== (ins.str || '')) s.setOverride(current.id, 'ins', insVal);
     current.editing = false;
@@ -344,7 +467,11 @@ RH.songSheet = (() => {
     if (!RH.SONGS[id]) return;
     if (current) current.sheet.close();
     const s = store();
-    const sheet = ui.sheet({ className: 'song-sheet', onClose: () => { current = null; } });
+    const sheet = ui.sheet({ className: 'song-sheet', onClose: () => {
+      if (current && current.metro) current.metro.stop();
+      if (current && current.chart) current.chart.destroy();
+      current = null;
+    } });
     current = { id, sheet, memberId: memberId || s.me() || (s.members()[0] && s.members()[0].id), editing: false, dragging: false, pendingRender: false };
     const bodyEl = sheet.body;
     // Eventos de um painel que já está fechando são ignorados.
@@ -384,7 +511,7 @@ RH.songSheet = (() => {
 
   const refresh = (changes) => {
     if (!current) return;
-    if (!(changes.members || changes.setlist || changes.songs.has(current.id))) return;
+    if (!(changes.members || changes.setlist || changes.rehearsals || changes.songs.has(current.id))) return;
     const active = document.activeElement;
     const typing = active && current.sheet.el.contains(active) && active.matches('input:not([type=range]), select, textarea');
     if (current.dragging || typing) {

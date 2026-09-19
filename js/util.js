@@ -126,9 +126,60 @@ RH.util = (() => {
 
   const needsRenormalize = (before, after) => before != null && after != null && Math.abs(after - before) < 1e-6;
 
+  // Datas no formato AAAA-MM-DD, no fuso do aparelho.
+  const pad2 = (n) => String(n).padStart(2, '0');
+  const dayKey = (t) => {
+    const d = new Date(t);
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+  };
+  const dayStart = (key) => {
+    const [y, m, d] = String(key).split('-').map(Number);
+    return new Date(y, m - 1, d).getTime();
+  };
+  // Todos os dias de `from` a `to` (inclusive).
+  const dayRange = (from, to) => {
+    const out = [];
+    const d = new Date(dayStart(from));
+    const end = dayStart(to);
+    while (d.getTime() <= end && out.length < 3700) {
+      out.push(dayKey(d.getTime()));
+      d.setDate(d.getDate() + 1);
+    }
+    return out;
+  };
+  const formatDay = (key, opts = { day: '2-digit', month: '2-digit', year: 'numeric' }) =>
+    (key ? new Date(dayStart(key)).toLocaleDateString('pt-BR', opts) : '');
+
+  // Segundos ↔ "m:ss" (ou "h:mm:ss").
+  const formatDuration = (sec) => {
+    if (sec == null || !isFinite(sec)) return '';
+    const neg = sec < 0;
+    let s = Math.round(Math.abs(sec));
+    const h = Math.floor(s / 3600);
+    s -= h * 3600;
+    const m = Math.floor(s / 60);
+    s -= m * 60;
+    return `${neg ? '-' : ''}${h ? `${h}:${pad2(m)}` : m}:${pad2(s)}`;
+  };
+  const parseDuration = (text) => {
+    const t = String(text || '').trim();
+    if (!t) return null;
+    if (/^\d+$/.test(t)) return Number(t) * 60; // só minutos
+    const m = t.match(/^(?:(\d+):)?(\d{1,2}):(\d{2})$/);
+    if (!m) return NaN;
+    return Number(m[1] || 0) * 3600 + Number(m[2]) * 60 + Number(m[3]);
+  };
+  // Minutos por extenso curto: 3480 → "58 min", 4000 → "1 h 07 min".
+  const formatMinutes = (sec) => {
+    const min = Math.round(Math.abs(sec) / 60);
+    const h = Math.floor(min / 60);
+    return h ? `${h} h ${pad2(min % 60)} min` : `${min} min`;
+  };
+
   return {
     sha256, median, randomId, fold, escapeHtml, clone, clamp, debounce,
     getPath, setPath, assertLeafPaths, positionBetween, needsRenormalize,
+    dayKey, dayStart, dayRange, formatDay, formatDuration, parseDuration, formatMinutes,
   };
 })();
 

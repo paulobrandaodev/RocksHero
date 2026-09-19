@@ -153,6 +153,8 @@ RH.views.catalog = (() => {
       if (filters.status === 'ready' && m < 80) return false;
       if (filters.status === 'progress' && (m === 0 || m >= 80)) return false;
       if (filters.status === 'zero' && m !== 0) return false;
+      if (filters.status === 'wanted' && !s.wanters(id).length) return false;
+      if (filters.status === 'mywant' && s.me() && !s.wants(id, s.me())) return false;
       if (filters.status === 'mine') {
         const me = s.me();
         if (!me) return true;
@@ -196,7 +198,7 @@ RH.views.catalog = (() => {
           <div class="song-title">${esc(song.t)} ${badgesFor(item)}</div>
           <div class="song-sub">${esc(song.a)} · ${song.y}${games}</div>
         </div>
-        <div class="song-tech">${ui.listenLinks(id)}${ui.tuningBadge(s.tuning(id))}${ui.instruments(s, id)}</div>
+        <div class="song-tech">${ui.wantBadge(s.wanters(id).length, s.wants(id, s.me()))}${ui.listenLinks(id)}${ui.tuningBadge(s.tuning(id))}${ui.instruments(s, id)}</div>
         <div class="song-bars${members.length > 4 ? ' is-many' : ''}">${bars}</div>
         ${ui.score(s.median(id))}
         <button type="button" class="sl-toggle" data-toggle aria-pressed="${inSet}" title="${inSet ? 'Tirar do set list' : 'Adicionar ao set list'}" aria-label="${inSet ? 'Tirar do set list' : 'Adicionar ao set list'}">
@@ -313,6 +315,8 @@ RH.views.catalog = (() => {
             ${opt('status', 'progress', 'Em andamento')}
             ${opt('status', 'zero', 'Não começadas')}
             ${me ? opt('status', 'mine', 'Falta eu tirar') : ''}
+            ${opt('status', 'wanted', 'Alguém quer tocar')}
+            ${me ? opt('status', 'mywant', 'Eu quero tocar') : ''}
           </select>
         </label>
         <label><span class="visually-hidden">Ordenar</span>
@@ -320,6 +324,9 @@ RH.views.catalog = (() => {
             ${opt('sort', 'game', gameId === 'todas' ? 'Ordem alfabética' : 'Ordem do jogo')}
             ${opt('sort', 'median-desc', 'Mais prontas primeiro')}
             ${opt('sort', 'median-asc', 'Menos prontas primeiro')}
+            ${opt('sort', 'priority', 'Prioridade de ensaio')}
+            ${opt('sort', 'bpm', 'Andamento (BPM)')}
+            ${opt('sort', 'duration', 'Duração')}
             ${opt('sort', 'artist', 'Artista')}
             ${opt('sort', 'year', 'Ano')}
             ${gameId === 'todas' ? '' : opt('sort', 'title', 'Título')}
@@ -348,9 +355,13 @@ RH.views.catalog = (() => {
       year: (a, b) => RH.SONGS[a.id].y - RH.SONGS[b.id].y || collator.compare(title(a), title(b)),
       'median-desc': (a, b) => (s.median(b.id) || 0) - (s.median(a.id) || 0) || collator.compare(title(a), title(b)),
       'median-asc': (a, b) => (s.median(a.id) || 0) - (s.median(b.id) || 0) || collator.compare(title(a), title(b)),
+      priority: (a, b) => s.wantScore(b.id) - s.wantScore(a.id) || (s.median(b.id) || 0) - (s.median(a.id) || 0) || collator.compare(title(a), title(b)),
+      // sem BPM/duração vão para o fim
+      bpm: (a, b) => (s.bpm(a.id).val || 999) - (s.bpm(b.id).val || 999) || collator.compare(title(a), title(b)),
+      duration: (a, b) => (s.duration(a.id).sec || 1e6) - (s.duration(b.id).sec || 1e6) || collator.compare(title(a), title(b)),
     }[filters.sort];
     items.sort(cmp);
-    const label = { title: 'Por título', artist: 'Por artista', year: 'Por ano', 'median-desc': 'Mais prontas primeiro', 'median-asc': 'Menos prontas primeiro' }[filters.sort];
+    const label = { title: 'Por título', artist: 'Por artista', year: 'Por ano', 'median-desc': 'Mais prontas primeiro', 'median-asc': 'Menos prontas primeiro', priority: 'Prioridade de ensaio (quem quer tocar × quanto já está pronta)', bpm: 'Do mais lento ao mais rápido', duration: 'Da mais curta à mais longa' }[filters.sort];
     return [{ key: 'sorted', name: label, entries: items }];
   };
 
@@ -496,12 +507,13 @@ RH.views.catalog = (() => {
     if (toggle) {
       const id = toggle.closest('.song-row').dataset.id;
       const s = store();
+      const list = s.setlist().name || 'set list';
       if (s.inSetlist(id)) {
         s.removeFromSetlist(id);
-        ui.toast(`“${RH.SONGS[id].t}” saiu do set list`);
+        ui.toast(`“${RH.SONGS[id].t}” saiu de “${list}”`);
       } else {
         s.addToSetlist(id);
-        ui.toast(`“${RH.SONGS[id].t}” entrou no set list!`, { kind: 'ok' });
+        ui.toast(`“${RH.SONGS[id].t}” entrou em “${list}”!`, { kind: 'ok' });
       }
       return;
     }

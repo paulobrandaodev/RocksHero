@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "data:fetch": "node data/fetch-wikitext.mjs",
-    "data:build": "node data/build-data.mjs && node data/build-meta.mjs && node data/validate.mjs",
+    "data:extra": "node data/fetch-extra.mjs && node data/fetch-lrclib.mjs && node data/build-extra.mjs",
+    "data:build": "node data/build-data.mjs && node data/build-meta.mjs && node data/build-extra.mjs && node data/validate.mjs",
     "data:validate": "node data/validate.mjs",
     "firebase:bundle": "node firebase-bundle/build.mjs",
     "emulators": "npx -y firebase-tools@15.30.1 emulators:start --only auth,database --project demo-rockshero --config ../firebase.json",

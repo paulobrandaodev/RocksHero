@@ -3,8 +3,10 @@
 App da banda **Rocks Hero** para acompanhar quanto cada membro já tirou das músicas dos Guitar Hero e montar o set list do show. Feito em HTML, CSS e JavaScript puro: não tem etapa de build.
 
 - **Músicas**: uma aba por jogo, com as 719 músicas dos 13 Guitar Hero de console. Mostra a afinação original, os instrumentos e quanto cada membro já tirou, além da mediana da banda. Tem filtro por instrumentação (ex.: 2 guitarras e sem teclado) e botões para buscar a música no YouTube e no Spotify.
-- **Painel da música**: progresso e **observações de cada músico** (salvas enquanto digita e visíveis para a banda toda), correção de afinação/instrumentação e onde a música aparece.
-- **Set List**: arraste pelas gemas para ordenar. O resumo traz o rock meter da banda, avisa trocas de afinação entre músicas e as partes sem membro (ex.: teclado). Tem botão de imprimir.
+- **Painel da música**: progresso e **observações de cada músico** (salvas enquanto digita e visíveis para a banda toda), duração e BPM, **letra** com rolagem automática, **metrônomo**, botão **Quero tocar**, gráfico da evolução de cada membro, quantas vezes foi tocada em show e ensaiada, correção de afinação/instrumentação/duração/BPM e onde a música aparece.
+- **Set List**: vários set lists (show, ensaio, acústico…), cada um com data, tempo combinado com a casa e tempo por troca de afinação. Arraste pelas gemas para ordenar. O resumo traz o rock meter da banda, a duração total ("sobram 4 min"), as trocas de afinação (com botão **Otimizar**, que agrupa as músicas pela afinação sem mexer na abertura e no encerramento), as partes sem membro e a energia do set (BPM de cada música). Imprime a folha de cada músico com as observações dele. Set list marcado como **Show realizado** entra no histórico de shows.
+- **Modo Palco**: tela cheia para o pedestal no show. Música atual em letra grande, a próxima, aviso de troca de afinação, suas observações, cronômetro (adiantado/atrasado) e a letra rolando sozinha. Avança com toque, deslizando, com as setas/Page Down ou com um pedal Bluetooth. Mantém a tela acesa e funciona sem internet (as letras do set ficam no aparelho).
+- **Ensaios**: diário de ensaio (data, músicas passadas, observação), gráfico de músicas prontas de cada membro e da banda ao longo do tempo, músicas paradas há semanas e prioridade de ensaio (quem quer tocar × quanto já está pronta).
 - **Banda**: formação, "quem é você" em cada aparelho e backup.
 
 Senha da banda: `Hero@123`.
@@ -41,7 +43,7 @@ O plano gratuito (Spark) sobra para uma banda.
    - Em *Usuários › Adicionar usuário*, use o e-mail `rockshero@example.com` (é o `bandEmail` do arquivo de config) e a senha **`Hero@123`**.
    - Copie o **UID** do usuário criado.
    - Em *Configurações › Ações do usuário* (em inglês, *User actions*), **desmarque a opção de permitir criação de contas** (*Enable create (sign-up)*). Assim ninguém cria outra conta com a sua apiKey.
-6. **Regras do banco** (repita este passo sempre que `database.rules.json` mudar): abra `database.rules.json`, troque `UID_DA_BANDA` (aparece 2 vezes) pelo UID copiado. Cole o conteúdo em *Realtime Database › Regras* e clique em **Publicar**.
+6. **Regras do banco** (repita este passo sempre que `database.rules.json` mudar; **a versão 1.2.0 mudou as regras**): abra `database.rules.json`, troque `UID_DA_BANDA` (aparece 2 vezes) pelo UID copiado. Cole o conteúdo em *Realtime Database › Regras* e clique em **Publicar**.
 
 Pronto: abra o app, digite `Hero@123` e o status no topo deve mostrar **Sincronizado**.
 
@@ -49,6 +51,8 @@ Observações:
 - **A `apiKey` não é segredo.** O Firebase foi feito para ela ficar no site. Quem protege os dados são as regras (só a conta da banda lê e escreve) e a senha. O GitHub pode mandar um alerta de "secret" sobre essa chave: pode dispensar.
 - **Trocar a senha**: no console, em *Authentication › Usuários*, use o menu do usuário para redefinir a senha. Os aparelhos logados precisarão entrar de novo.
 - **Botão do Spotify**: no celular, abre o app do Spotify se estiver instalado. No computador, tenta abrir o app e, se ele não abrir, oferece o Spotify Web.
+- **Letras**: vêm das bases públicas [LRCLIB](https://lrclib.net) e [lyrics.ovh](https://lyrics.ovh), buscadas pelo próprio aparelho e guardadas só nele (não vão para o banco da banda). Quando a letra não é achada, dá para colar a letra no app. A rolagem automática começa numa velocidade calculada pelo BPM (BPM ÷ 24, numa escala de 0 a 10) e cada músico pode ajustar; o ajuste fica guardado por música.
+- **Pedal Bluetooth no Modo Palco**: configure o pedal para mandar Page Down/Page Up (ou as setas) e ele troca de música. Espaço liga e pausa a rolagem da letra.
 - **Primeiro acesso de cada aparelho precisa de internet.** Depois disso, dá para editar sem sinal: as mudanças ficam guardadas e são enviadas quando a conexão volta.
 
 ## 3. Publicar no GitHub Pages
@@ -73,6 +77,7 @@ Na tela **Banda › Backup**, *Exportar* baixa um `.json` com todo o progresso, 
   - Na banda, quem souber pode corrigir direto no app (painel da música › *Editar afinação/instrumentação*); a correção vale para todos.
   - A lista do que falta confirmar está em `tools/data/out/meta-a-confirmar.txt` (gerada pelo script).
 - **Instrumentação**: conta as partes do arranjo original (ex.: 2 guitarras). Partes que a formação atual não cobre aparecem apagadas.
+- **Duração e BPM**: da gravação de estúdio no Deezer (API pública), conferidos com o LRCLIB. 702 das 719 músicas têm duração e 532 têm BPM. O BPM medido pelo Deezer às vezes sai pela metade ou em dobro: esses casos e os BPMs preenchidos à mão estão em `tools/data/extra/manual.txt` e aparecem com "?" (a confirmar). A banda corrige no painel da música.
 - **Mediana da banda**: calculada com os membros que tocam na música. Fica de fora quem marcou N/A e quem toca um instrumento que a música não tem (ex.: o vocal numa instrumental). Quem ainda não registrou nada conta como 0%.
 
 ## 6. Para quem for mexer no código
@@ -83,7 +88,7 @@ Estrutura principal:
 index.html            página única (rotas #/musicas/<jogo>, #/setlist, #/banda)
 css/                  identidade visual (tokens em base.css)
 js/                   app: store.js (estado e sincronização), sync-*.js, telas
-data/                 songs.js e games.js (gerados) + song-meta.js (gerado de tools/data/meta)
+data/                 songs.js e games.js (gerados) + song-meta.js (de tools/data/meta) + song-extra.js (duração e BPM)
 vendor/firebase-rh.js SDK do Firebase 12 empacotado (auth + database)
 assets/               logo, artes, fontes (com licenças)
 tools/                scripts e testes (não são usados pelo app)
@@ -94,7 +99,8 @@ Ferramentas (precisam de Node 20+; Java 11+ só para os emuladores). Dentro de `
 ```bash
 npm install
 npm run data:fetch        # baixa as listas da Wikipedia (revisões fixadas)
-npm run data:build        # recria data/ a partir delas + tools/data/meta/*.txt
+npm run data:extra        # busca duração e BPM no Deezer e confere no LRCLIB (retoma de onde parou)
+npm run data:build        # recria data/ a partir delas + tools/data/meta/*.txt + tools/data/extra/
 npm run test:unit         # lógica (mediana, diário offline, set list, importação…)
 npm run emulators         # emuladores do Firebase (deixe rodando em outro terminal)
 npm run test:rules        # regras do banco

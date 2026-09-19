@@ -16,6 +16,7 @@ RH.app = (() => {
   const ROUTES = {
     musicas: { view: () => RH.views.catalog, nav: 'musicas' },
     setlist: { view: () => RH.views.setlist, nav: 'setlist' },
+    ensaios: { view: () => RH.views.rehearsals, nav: 'ensaios' },
     banda: { view: () => RH.views.band, nav: 'banda' },
   };
 
@@ -38,6 +39,7 @@ RH.app = (() => {
           <nav class="main-nav" aria-label="Principal">
             <a href="#/musicas" data-nav="musicas">${RH.icons.svg('music')}<span>Músicas</span></a>
             <a href="#/setlist" data-nav="setlist">${RH.icons.svg('list')}<span>Set List</span><span class="count" data-setlist-count hidden></span></a>
+            <a href="#/ensaios" data-nav="ensaios">${RH.icons.svg('calendar')}<span>Ensaios</span></a>
             <a href="#/banda" data-nav="banda">${RH.icons.svg('users')}<span>Banda</span></a>
           </nav>
           <div class="header-actions">
@@ -51,6 +53,7 @@ RH.app = (() => {
       <nav class="bottom-nav" aria-label="Principal">
         <a href="#/musicas" data-nav="musicas">${RH.icons.svg('music')}<span>Músicas</span></a>
         <a href="#/setlist" data-nav="setlist">${RH.icons.svg('list')}<span>Set List</span><span class="count" data-setlist-count hidden></span></a>
+        <a href="#/ensaios" data-nav="ensaios">${RH.icons.svg('calendar')}<span>Ensaios</span></a>
         <a href="#/banda" data-nav="banda">${RH.icons.svg('users')}<span>Banda</span></a>
       </nav>`;
     document.body.appendChild(app);
@@ -140,7 +143,7 @@ RH.app = (() => {
       askedWhoAmI = true;
       RH.safeStorage.setRaw('rh:v1:ui:asked-me', '1');
       refreshHeader();
-      if (current.view && current.view.update) current.view.update({ songs: new Set(), members: true, setlist: false, any: true });
+      if (current.view && current.view.update) current.view.update({ songs: new Set(), members: true, setlist: false, rehearsals: false, any: true });
       const m = btn.dataset.pick && store.state.members[btn.dataset.pick];
       ui.toast(m ? `Bora, ${m.name}!` : 'Modo espectador', { kind: m ? 'rock' : 'info' });
       sheet.close();
@@ -161,7 +164,7 @@ RH.app = (() => {
     const { name, params } = parseHash();
     if (!name) {
       const last = RH.safeStorage.getRaw(LAST_ROUTE_KEY);
-      location.replace(last && /^#\/(musicas|setlist|banda)/.test(last) ? last : '#/musicas/gh1');
+      location.replace(last && /^#\/(musicas|setlist|ensaios|banda)/.test(last) ? last : '#/musicas/gh1');
       return;
     }
     if (name === 'musicas' && !location.hash.split('/')[2]) {
@@ -266,6 +269,7 @@ RH.app = (() => {
     if (!appShown) return;
     if (current.view && current.view.update) current.view.update(changes);
     RH.songSheet.refresh(changes);
+    RH.stage.refresh(changes);
     if (changes.setlist || changes.members) refreshHeader();
     if (changes.members) maybeAskWhoAmI();
   };
