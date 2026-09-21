@@ -326,6 +326,7 @@ RH.views.catalog = (() => {
             ${opt('sort', 'median-desc', 'Mais prontas primeiro')}
             ${opt('sort', 'median-asc', 'Menos prontas primeiro')}
             ${opt('sort', 'priority', 'Prioridade de ensaio')}
+            ${opt('sort', 'wanted-desc', 'Mais votadas')}
             ${opt('sort', 'bpm', 'Andamento (BPM)')}
             ${opt('sort', 'duration', 'Duração')}
             ${opt('sort', 'artist', 'Artista')}
@@ -357,12 +358,13 @@ RH.views.catalog = (() => {
       'median-desc': (a, b) => (s.median(b.id) || 0) - (s.median(a.id) || 0) || collator.compare(title(a), title(b)),
       'median-asc': (a, b) => (s.median(a.id) || 0) - (s.median(b.id) || 0) || collator.compare(title(a), title(b)),
       priority: (a, b) => s.wantScore(b.id) - s.wantScore(a.id) || (s.median(b.id) || 0) - (s.median(a.id) || 0) || collator.compare(title(a), title(b)),
+      'wanted-desc': (a, b) => s.wanters(b.id).length - s.wanters(a.id).length || collator.compare(title(a), title(b)),
       // sem BPM/duração vão para o fim
       bpm: (a, b) => (s.bpm(a.id).val || 999) - (s.bpm(b.id).val || 999) || collator.compare(title(a), title(b)),
       duration: (a, b) => (s.duration(a.id).sec || 1e6) - (s.duration(b.id).sec || 1e6) || collator.compare(title(a), title(b)),
     }[filters.sort];
     items.sort(cmp);
-    const label = { title: 'Por título', artist: 'Por artista', year: 'Por ano', 'median-desc': 'Mais prontas primeiro', 'median-asc': 'Menos prontas primeiro', priority: 'Prioridade de ensaio (quem quer tocar × quanto já está pronta)', bpm: 'Do mais lento ao mais rápido', duration: 'Da mais curta à mais longa' }[filters.sort];
+    const label = { title: 'Por título', artist: 'Por artista', year: 'Por ano', 'median-desc': 'Mais prontas primeiro', 'median-asc': 'Menos prontas primeiro', priority: 'Prioridade de ensaio (quem quer tocar × quanto já está pronta)', 'wanted-desc': 'Mais votadas (quantos querem tocar)', bpm: 'Do mais lento ao mais rápido', duration: 'Da mais curta à mais longa' }[filters.sort];
     return [{ key: 'sorted', name: label, entries: items }];
   };
 
