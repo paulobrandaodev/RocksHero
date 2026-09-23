@@ -131,6 +131,18 @@
         }
       },
 
+      "custom": {
+        "$song": {
+          ".validate": "$song.matches(/^nossa--[a-z0-9-]+$/) && $song.length <= 120 && newData.hasChildren(['n', 'a', 't'])",
+          "n": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 80" },
+          "a": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 80" },
+          "y": { ".validate": "newData.isNumber() && newData.val() >= 1900 && newData.val() <= 2100" },
+          "t": { ".validate": "newData.isNumber() && newData.val() <= now + 600000" },
+          "by": { ".validate": "newData.isString() && newData.val().length <= 42" },
+          "$other": { ".validate": false }
+        }
+      },
+
       "rehearsals": {
         "$rehearsal": {
           ".validate": "$rehearsal.matches(/^r-[a-z0-9]+$/) && $rehearsal.length <= 42 && newData.hasChildren(['date', 't'])",

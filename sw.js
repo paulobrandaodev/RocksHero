@@ -1,5 +1,5 @@
 /* Service worker: o app abre mesmo sem internet (os dados sincronizam quando a conexão volta). */
-const VERSION = '1.2.1';
+const VERSION = '1.3.0';
 const CACHE = `rocks-hero-${VERSION}`;
 
 const ASSETS = [
@@ -10,7 +10,7 @@ const ASSETS = [
   'js/version.js', 'js/constants.js', 'js/util.js', 'js/firebase-config.js',
   'js/sync-local.js', 'js/sync-firebase.js', 'js/store.js', 'js/icons.js', 'js/ui.js',
   'js/chart.js', 'js/lyrics.js', 'js/metronome.js',
-  'js/song-sheet.js', 'js/catalog.js', 'js/dnd.js', 'js/setlist.js', 'js/stage.js', 'js/rehearsals.js',
+  'js/custom-song.js', 'js/song-sheet.js', 'js/catalog.js', 'js/dnd.js', 'js/setlist.js', 'js/stage.js', 'js/rehearsals.js',
   'js/band.js', 'js/login.js', 'js/app.js',
   'data/songs.js', 'data/games.js', 'data/song-meta.js', 'data/song-extra.js',
   'vendor/firebase-rh.js',

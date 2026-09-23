@@ -20,6 +20,7 @@ RH.views.catalog = (() => {
   const U = RH.util;
   const esc = ui.esc;
   const PREFS_KEY = 'rh:v1:ui:catalog';
+  const OWN = 'nossas'; // aba das músicas cadastradas pela banda
   const collator = new Intl.Collator('pt-BR', { sensitivity: 'base', numeric: true });
 
   let root = null;
@@ -112,7 +113,21 @@ RH.views.catalog = (() => {
 
   // ---------- dados da aba ----------
 
+  const idsFor = (id) => {
+    if (id === 'todas') return Object.keys(RH.SONGS);
+    if (id === OWN) return store().customSongs().map((c) => c.id);
+    return RH.GAMES.find((g) => g.id === id).tiers.flatMap((t) => t.songs.map((e) => e.id));
+  };
+
   const groupsFor = (id) => {
+    if (id === OWN) {
+      const groups = new Map();
+      for (const c of store().customSongs()) {
+        if (!groups.has(c.a)) groups.set(c.a, { key: c.a, name: c.a, entries: [] });
+        groups.get(c.a).entries.push({ id: c.id, entry: {} });
+      }
+      return [...groups.values()];
+    }
     if (id === 'todas') {
       const ids = Object.keys(RH.SONGS).sort((a, b) => collator.compare(RH.SONGS[a].t, RH.SONGS[b].t));
       const groups = new Map();
@@ -120,8 +135,8 @@ RH.views.catalog = (() => {
         const first = U.fold(RH.SONGS[songId].t).replace(/^(the|a|an|o|os|as)\s+/i, '').charAt(0).toUpperCase();
         const key = /[A-Z]/.test(first) ? first : '#';
         if (!groups.has(key)) groups.set(key, { key, name: key === '#' ? 'Números e símbolos' : key, entries: [] });
-        const appearances = RH.catalog.songGames[songId];
-        groups.get(key).entries.push({ id: songId, entry: appearances[0].entry, all: appearances });
+        const appearances = RH.catalog.songGames[songId] || [];
+        groups.get(key).entries.push({ id: songId, entry: appearances.length ? appearances[0].entry : {}, all: appearances });
       }
       return [...groups.values()].sort((a, b) => (a.key === '#' ? -1 : b.key === '#' ? 1 : a.key.localeCompare(b.key)));
     }
@@ -138,7 +153,7 @@ RH.views.catalog = (() => {
 
   const matches = (id) => {
     const s = store();
-    if (filters.q && !RH.catalog.search[id].includes(filters.q)) return false;
+    if (filters.q && !(RH.catalog.search[id] || '').includes(filters.q)) return false;
     if (filters.onlySetlist && !s.inSetlist(id)) return false;
     if (!matchesIns(id)) return false;
     if (filters.tuning !== 'all') {
@@ -171,7 +186,7 @@ RH.views.catalog = (() => {
   const badgesFor = (item) => {
     const e = item.entry;
     const b = [];
-    if (gameId === 'todas') return '';
+    if (gameId === 'todas' || gameId === OWN) return '';
     if (e.bonus) b.push('<span class="badge badge-bonus">Bônus</span>');
     if (e.cover) b.push('<span class="badge badge-cover">Cover</span>');
     if (e.encore) b.push('<span class="badge badge-encore">Encore</span>');
@@ -189,14 +204,16 @@ RH.views.catalog = (() => {
     const applicable = new Set(s.applicableMembers(id).map((m) => m.id));
     const bars = members.map((m) => ui.memberBar(m, s.progress(id, m.id), applicable.has(m.id))).join('');
     const inSet = s.inSetlist(id);
-    const games = gameId === 'todas'
+    const games = gameId === 'todas' && item.all && item.all.length
       ? ` · ${item.all.map((a) => esc(a.game.short)).join(', ')}`
       : '';
+    const sub = `${esc(song.a)}${song.y ? ` · ${song.y}` : ''}${games}`;
+    const own = song.custom && gameId !== OWN ? '<span class="badge badge-own">Nossa</span>' : '';
     return `
       <div class="song-row" data-id="${id}" role="button" tabindex="0" aria-label="${esc(`${song.t}, ${song.a}`)}">
         <div class="song-main">
-          <div class="song-title">${esc(song.t)} ${badgesFor(item)}</div>
-          <div class="song-sub">${esc(song.a)} · ${song.y}${games}</div>
+          <div class="song-title">${esc(song.t)} ${own}${badgesFor(item)}</div>
+          <div class="song-sub">${sub}</div>
         </div>
         <div class="song-tech">${ui.tuningBadge(s.tuning(id))}${ui.instruments(s, id)}</div>
         <div class="song-bars${members.length > 4 ? ' is-many' : ''}">${bars}</div>
@@ -223,10 +240,15 @@ RH.views.catalog = (() => {
   };
 
   const tabsHtml = () => {
+    const own = store().customSongs().length;
     const all = `
       <a class="game-tab" role="tab" href="#/musicas/todas" aria-selected="${gameId === 'todas'}" style="--c1:#ff8a00">
         <span class="emblem emblem-all" aria-hidden="true"><span>★</span></span>
         <span>Todas<small>${Object.keys(RH.SONGS).length} músicas</small></span>
+      </a>
+      <a class="game-tab" role="tab" href="#/musicas/${OWN}" aria-selected="${gameId === OWN}" style="--c1:#8ad6ff;--c2:#0b2233">
+        <span class="emblem emblem-all" aria-hidden="true"><span>♪</span></span>
+        <span>Nossas<small>${own ? `${own} música${own === 1 ? '' : 's'}` : 'fora do GH'}</small></span>
       </a>`;
     const games = RH.GAMES.map((g) => `
       <a class="game-tab" role="tab" href="#/musicas/${g.id}" aria-selected="${g.id === gameId}" style="--c1:${g.c1};--c2:${g.c2}">
@@ -238,9 +260,7 @@ RH.views.catalog = (() => {
 
   const bannerStats = () => {
     const s = store();
-    const ids = gameId === 'todas'
-      ? Object.keys(RH.SONGS)
-      : RH.GAMES.find((g) => g.id === gameId).tiers.flatMap((t) => t.songs.map((e) => e.id));
+    const ids = idsFor(gameId);
     let ready = 0;
     let sum = 0;
     for (const id of ids) {
@@ -251,15 +271,30 @@ RH.views.catalog = (() => {
     return { total: ids.length, ready, avg: ids.length ? Math.round(sum / ids.length) : 0 };
   };
 
+  const addButtonHtml = (label = 'Adicionar música') => `<button type="button" class="btn btn-fire" data-add-song>${RH.icons.svg('plus')} ${label}</button>`;
+
   const bannerHtml = () => {
     const stats = bannerStats();
+    const own = store().customSongs().length;
+    if (gameId === OWN) {
+      return `
+        <div class="game-banner banner-own" style="--c1:#8ad6ff;--c2:#0b2233">
+          <span class="emblem emblem-all" aria-hidden="true"><span>♪</span></span>
+          <div>
+            <h1 class="chrome-text">Nossas músicas</h1>
+            <div class="meta">${stats.total ? `${stats.total} música${stats.total === 1 ? '' : 's'} fora do catálogo do Guitar Hero` : 'O que a banda toca e não está em nenhum Guitar Hero'}</div>
+            <div class="banner-actions">${addButtonHtml()}</div>
+          </div>
+          ${stats.total ? `<div class="banner-meter" data-banner-meter>${ui.rockMeter(stats.avg, { label: 'Progresso médio da banda' })}<span><strong>${stats.ready}</strong> de ${stats.total} prontas</span></div>` : ''}
+        </div>`;
+    }
     if (gameId === 'todas') {
       return `
         <div class="game-banner" style="--c1:#ff8a00;--c2:#3b0a0a">
           <span class="emblem emblem-all" aria-hidden="true"><span>★</span></span>
           <div>
             <h1 class="fire-text">Todas as músicas</h1>
-            <div class="meta">${stats.total} músicas únicas dos 13 Guitar Hero de console</div>
+            <div class="meta">${own ? `${stats.total - own} músicas dos 13 Guitar Hero de console + ${own} da banda` : `${stats.total} músicas únicas dos 13 Guitar Hero de console`}</div>
           </div>
           <div class="banner-meter" data-banner-meter>${ui.rockMeter(stats.avg, { label: 'Progresso médio da banda' })}<span><strong>${stats.ready}</strong> de ${stats.total} prontas</span></div>
         </div>`;
@@ -278,7 +313,7 @@ RH.views.catalog = (() => {
 
   const tuningFilterOptions = () => {
     const s = store();
-    const ids = gameId === 'todas' ? Object.keys(RH.SONGS) : RH.GAMES.find((g) => g.id === gameId).tiers.flatMap((t) => t.songs.map((e) => e.id));
+    const ids = idsFor(gameId);
     const codes = new Map();
     let unknown = 0;
     let unconfirmed = 0;
@@ -322,7 +357,7 @@ RH.views.catalog = (() => {
         </label>
         <label><span class="visually-hidden">Ordenar</span>
           <select class="select" data-filter="sort">
-            ${opt('sort', 'game', gameId === 'todas' ? 'Ordem alfabética' : 'Ordem do jogo')}
+            ${opt('sort', 'game', gameId === 'todas' ? 'Ordem alfabética' : gameId === OWN ? 'Por artista' : 'Ordem do jogo')}
             ${opt('sort', 'median-desc', 'Mais prontas primeiro')}
             ${opt('sort', 'median-asc', 'Menos prontas primeiro')}
             ${opt('sort', 'priority', 'Prioridade de ensaio')}
@@ -391,8 +426,12 @@ RH.views.catalog = (() => {
     let empty = ui.$('[data-empty]', root);
     if (!visible && renderDone) {
       if (!empty) {
-        ui.$('[data-list]', root).insertAdjacentHTML('afterend', `
-          <div class="empty" data-empty><h3 class="chrome-text">Nenhuma música</h3><p>Nada bate com esses filtros. Tente outra busca.</p></div>`);
+        const own = gameId === OWN && !total;
+        ui.$('[data-list]', root).insertAdjacentHTML('afterend', own
+          ? `<div class="empty" data-empty><h3 class="chrome-text">Nenhuma música cadastrada</h3>
+              <p>Aqui entram as músicas que a banda toca e não estão em nenhum Guitar Hero: cadastre o artista e o nome, o resto funciona igual.</p>
+              ${addButtonHtml('Adicionar a primeira')}</div>`
+          : `<div class="empty" data-empty><h3 class="chrome-text">Nenhuma música</h3><p>Nada bate com esses filtros. Tente outra busca.</p></div>`);
       }
     } else if (empty) {
       empty.remove();
@@ -462,10 +501,11 @@ RH.views.catalog = (() => {
     // Durante a montagem em partes, o mapa ainda está vazio: procura a linha no DOM.
     const row = rows.get(id) || (root && root.querySelector(`.song-row[data-id="${id}"]`));
     if (!row) return;
-    const items = gameId === 'todas'
-      ? [{ id, entry: RH.catalog.songGames[id][0].entry, all: RH.catalog.songGames[id] }]
-      : RH.catalog.songGames[id].filter((a) => a.game.id === gameId).map((a) => ({ id, entry: a.entry }));
-    if (!items.length) return;
+    const appearances = RH.catalog.songGames[id] || [];
+    const items = gameId === 'todas' || gameId === OWN
+      ? [{ id, entry: appearances.length ? appearances[0].entry : {}, all: appearances }]
+      : appearances.filter((a) => a.game.id === gameId).map((a) => ({ id, entry: a.entry }));
+    if (!items.length || !RH.SONGS[id]) return;
     const tmp = document.createElement('div');
     tmp.innerHTML = rowHtml(items[0]).trim();
     const fresh = tmp.firstElementChild;
@@ -505,6 +545,7 @@ RH.views.catalog = (() => {
 
   const onClick = (e) => {
     if (onInsClick(e)) return;
+    if (e.target.closest('[data-add-song]')) return RH.customSong.open();
     const toggle = e.target.closest('[data-toggle]');
     if (toggle) {
       const id = toggle.closest('.song-row').dataset.id;
@@ -556,7 +597,7 @@ RH.views.catalog = (() => {
   // ---------- ciclo de vida ----------
 
   const mount = (container, params = {}) => {
-    gameId = params.game === 'todas' || RH.GAMES.some((g) => g.id === params.game) ? params.game : 'gh1';
+    gameId = params.game === 'todas' || params.game === OWN || RH.GAMES.some((g) => g.id === params.game) ? params.game : 'gh1';
     filters = loadPrefs();
     if (gameId === 'todas' && filters.sort === 'title') filters.sort = 'game';
     root = document.createElement('div');
@@ -584,6 +625,12 @@ RH.views.catalog = (() => {
 
   const update = (changes) => {
     if (!root) return;
+    if (changes.custom) {
+      ui.$('[data-banner]', root).innerHTML = bannerHtml();
+      ui.$('.game-tabs', root).innerHTML = tabsHtml();
+      renderList({ keepScroll: true });
+      return;
+    }
     if (changes.members) {
       renderList({ keepScroll: true });
       updateBanner();
@@ -618,5 +665,11 @@ RH.views.catalog = (() => {
     rows = new Map();
   };
 
-  return { mount, update, unmount, title: () => (gameId === 'todas' ? 'Todas as músicas' : (RH.GAMES.find((g) => g.id === gameId) || {}).name) };
+  const title = () => {
+    if (gameId === 'todas') return 'Todas as músicas';
+    if (gameId === OWN) return 'Nossas músicas';
+    return (RH.GAMES.find((g) => g.id === gameId) || {}).name;
+  };
+
+  return { mount, update, unmount, title };
 })();

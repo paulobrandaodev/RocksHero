@@ -177,7 +177,7 @@ RH.views.setlist = (() => {
           <span class="sl-num">${index + 1}</span>
           <div class="sl-song" data-open="${item.id}" role="button" tabindex="0">
             <span class="sl-title">${esc(song.t)}</span>
-            <span class="sl-artist">${esc(song.a)} · ${esc(games)}</span>
+            <span class="sl-artist">${esc(song.a)}${games ? ` · ${esc(games)}` : ''}</span>
             ${info ? `<span class="sl-info">${info}</span>` : ''}
           </div>
           <div class="sl-tech">${ui.tuningBadge(s.tuning(item.id))}${ui.instruments(s, item.id, { inline: true })}</div>

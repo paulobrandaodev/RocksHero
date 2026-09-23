@@ -173,7 +173,7 @@ RH.views.rehearsals = (() => {
     const search = U.debounce((q) => {
       const f = U.fold(q.trim());
       if (f.length < 2) { results.innerHTML = ''; return; }
-      const hits = Object.keys(RH.SONGS).filter((id) => RH.catalog.search[id].includes(f)).slice(0, 8);
+      const hits = Object.keys(RH.SONGS).filter((id) => (RH.catalog.search[id] || '').includes(f)).slice(0, 8);
       results.innerHTML = hits.map((id) => `<button type="button" class="reh-result" data-add="${esc(id)}">${RH.icons.svg(selected.has(id) ? 'check' : 'plus')}<span>${esc(RH.SONGS[id].t)}</span><small>${esc(RH.SONGS[id].a)}</small></button>`).join('')
         || '<p class="faint small">Nada encontrado.</p>';
     }, 150);

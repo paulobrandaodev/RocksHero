@@ -154,6 +154,8 @@ RH.songSheet = (() => {
     const applicable = new Set(s.applicableMembers(id).map((m) => m.id));
     const appearances = (RH.catalog.songGames[id] || []);
     const note = s.note(id);
+    const custom = s.customSong(id);
+    const addedBy = custom && custom.by && s.state.members && s.state.members[custom.by] ? s.state.members[custom.by].name : '';
 
     const tuningNote = t.overridden
       ? `Afinação corrigida pela banda${t.t ? ` ${ui.formatWhen(t.t)}` : ''}.`
@@ -287,8 +289,17 @@ RH.songSheet = (() => {
         ${historyHtml(id)}
       </section>
       <section class="sheet-section">
-        <h3>${RH.icons.svg('music')} Aparece em</h3>
-        <div class="games-chips">${games}</div>
+        ${custom ? `
+          <h3>${RH.icons.svg('star')} Música da banda</h3>
+          <p class="dim small">Fora do catálogo do Guitar Hero${addedBy ? `, cadastrada por ${esc(addedBy)}` : ''}.</p>
+          <div class="practice-actions">
+            <button type="button" class="btn" data-edit-song>${RH.icons.svg('edit')} Editar nome e artista</button>
+            <button type="button" class="btn btn-ghost" data-delete-song>${RH.icons.svg('close')} Apagar música</button>
+          </div>
+        ` : `
+          <h3>${RH.icons.svg('music')} Aparece em</h3>
+          <div class="games-chips">${games}</div>
+        `}
       </section>
       <div class="sheet-footer">
         <button type="button" class="btn ${inSet ? 'btn-ghost' : 'btn-fire'}" data-toggle-setlist>
@@ -297,7 +308,7 @@ RH.songSheet = (() => {
       </div>`;
 
     const scrollTop = current.sheet.body.scrollTop;
-    current.sheet.setTitle(song.t, `${song.a} · ${song.y}`);
+    current.sheet.setTitle(song.t, song.y ? `${song.a} · ${song.y}` : song.a);
     if (current.chart) current.chart.destroy();
     current.chart = null;
     current.sheet.body.innerHTML = body;
@@ -344,6 +355,8 @@ RH.songSheet = (() => {
       return setProgress(raw === 'na' || raw === 'clear' ? raw : Number(raw));
     }
     if (target.closest('[data-lyrics]')) return RH.lyrics.openSheet(current.id);
+    if (target.closest('[data-edit-song]')) return RH.customSong.open({ id: current.id });
+    if (target.closest('[data-delete-song]')) return RH.customSong.remove(current.id);
     if (target.closest('[data-want]')) {
       const me = s.me();
       if (!me) {
@@ -507,6 +520,7 @@ RH.songSheet = (() => {
 
   const refresh = (changes) => {
     if (!current) return;
+    if (!RH.SONGS[current.id]) return current.sheet.close();
     if (!(changes.members || changes.setlist || changes.rehearsals || changes.songs.has(current.id))) return;
     const active = document.activeElement;
     const typing = active && current.sheet.el.contains(active) && active.matches('input:not([type=range]), select, textarea');

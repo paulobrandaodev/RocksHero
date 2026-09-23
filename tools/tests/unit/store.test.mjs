@@ -351,3 +351,98 @@ test('adaptador local: senha correta entra e dados persistem no navegador', asyn
   await store2.logout();
   assert.equal(store2.status.authenticated, false);
 });
+
+test('música fora do Guitar Hero: entra no catálogo, sincroniza e funciona como as outras', async () => {
+  const server = newServer();
+  const a = await started(server);
+  const b = await started(server);
+  const id = a.store.saveCustomSong({ title: '  Tempo   Perdido ', artist: 'Legião Urbana', year: '1986' });
+  assert.equal(id, 'nossa--legiao-urbana--tempo-perdido');
+  await tick();
+  assert.deepEqual(plain(a.ctx.RH.SONGS[id]), { t: 'Tempo Perdido', a: 'Legião Urbana', y: 1986, custom: true });
+  assert.deepEqual(plain(b.ctx.RH.SONGS[id]), { t: 'Tempo Perdido', a: 'Legião Urbana', y: 1986, custom: true });
+  assert.equal(b.store.isCustom(id), true);
+  assert.equal(b.store.isCustom('band--full'), false);
+  assert.deepEqual(plain(b.store.customSongs().map((c) => c.id)), [id]);
+
+  // daqui para a frente é uma música como qualquer outra
+  b.store.setProgress(id, 'm-vocal', 100);
+  b.store.setOverride(id, 'tun', 'dropD');
+  b.store.addToSetlist(id);
+  await tick();
+  assert.equal(a.store.progress(id, 'm-vocal').v, 100);
+  assert.equal(a.store.tuning(id).code, 'dropD');
+  assert.equal(a.store.inSetlist(id), true);
+
+  // mesmo artista e título de novo: id próprio, sem atropelar o que já existe
+  assert.equal(a.store.saveCustomSong({ title: 'Tempo Perdido', artist: 'Legião Urbana' }), `${id}-2`);
+  await tick();
+  assert.equal(a.ctx.RH.SONGS[`${id}-2`].y, null);
+
+  // renomear vale para a banda toda
+  a.store.saveCustomSong({ id, title: 'Tempo Perdido (ao vivo)', artist: 'Legião Urbana', year: 1986 });
+  await tick();
+  assert.equal(b.ctx.RH.SONGS[id].t, 'Tempo Perdido (ao vivo)');
+  assert.equal(b.store.progress(id, 'm-vocal').v, 100, 'o progresso continua com a música');
+});
+
+test('música da banda: recusa cadastro vazio, acha a repetida e apagar limpa tudo', async () => {
+  const server = newServer();
+  const { store, ctx } = await started(server);
+  assert.throws(() => store.saveCustomSong({ title: '  ', artist: 'Banda' }), /nome da música/);
+  assert.throws(() => store.saveCustomSong({ title: 'Música', artist: '' }), /artista/);
+  assert.throws(() => store.saveCustomSong({ id: 'nossa--nao--existe', title: 'x', artist: 'y' }));
+
+  const id = store.saveCustomSong({ title: 'Ainda é Cedo', artist: 'Legião Urbana', year: 3000 });
+  assert.equal(store.customSong(id).y, undefined, 'ano fora do intervalo é descartado');
+  assert.equal(store.findSongByName('ainda é cedo', 'LEGIÃO URBANA'), id);
+  assert.equal(store.findSongByName('Full', 'Band'), 'band--full', 'acha também as do Guitar Hero');
+  assert.equal(store.findSongByName('Nada', 'Ninguém'), null);
+
+  store.setProgress(id, 'm-vocal', 60);
+  store.setNote(id, 'm-vocal', 'Entra sem contar');
+  store.setWant(id, 'm-vocal', true);
+  store.setOverride(id, 'bpm', 150);
+  store.addToSetlist(id);
+  const rid = store.saveRehearsal({ date: '2026-01-10', songs: [id, 'band--full'] });
+  await tick();
+  assert.equal(server.tree.custom[id].n, 'Ainda é Cedo');
+
+  store.deleteCustomSong(id);
+  await tick();
+  assert.equal(ctx.RH.SONGS[id], undefined, 'sai do catálogo em memória');
+  // os ramos ficam vazios (e podados) porque essa era a única música neles
+  for (const branch of ['custom', 'progress', 'history', 'notes', 'wants', 'overrides', 'setlists']) {
+    assert.equal(server.tree[branch], undefined, `sobrou algo em ${branch}`);
+  }
+  assert.deepEqual(plain(server.tree.rehearsals[rid].songs), { 'band--full': true });
+  assert.equal(store.inSetlist(id), false);
+  assert.equal(store.customSongs().length, 0);
+});
+
+test('backup leva as músicas da banda junto com o progresso delas', async () => {
+  const server = newServer();
+  const { store } = await started(server);
+  const id = store.saveCustomSong({ title: 'Faroeste Caboclo', artist: 'Legião Urbana', year: 1987 });
+  store.setProgress(id, 'm-vocal', 40);
+  const backup = store.exportData();
+  assert.equal(backup.data.custom[id].n, 'Faroeste Caboclo');
+
+  const outro = newServer();
+  const b = await started(outro);
+  const applied = b.store.importData({
+    app: 'rocks-hero',
+    data: {
+      ...backup.data,
+      custom: {
+        ...backup.data.custom,
+        'nossa--sem--nome': { n: '', a: 'X', t: 1 },   // inválida: ignorada
+        'id-invalido': { n: 'X', a: 'Y', t: 1 },       // fora do padrão: ignorada
+      },
+    },
+  });
+  assert.ok(applied >= 2);
+  assert.equal(b.ctx.RH.SONGS[id].t, 'Faroeste Caboclo');
+  assert.equal(b.store.progress(id, 'm-vocal').v, 40, 'o progresso da música importada não se perde');
+  assert.equal(b.store.customSongs().length, 1);
+});

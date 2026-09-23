@@ -117,6 +117,11 @@ async function main() {
     ['ensaio sem data recusado', () => db('PUT', 'rockshero/rehearsals/r-abc124', band.idToken, { t: now }), 401],
     ['ensaio com música marcada falso recusado', () => db('PUT', 'rockshero/rehearsals/r-abc125', band.idToken, { date: '2026-09-18', songs: { 'a--b': false }, t: now }), 401],
     ['ensaio com id inválido recusado', () => db('PUT', 'rockshero/rehearsals/ensaio1', band.idToken, { date: '2026-09-18', t: now }), 401],
+    ['música da banda', () => db('PUT', 'rockshero/custom/nossa--legiao-urbana--tempo-perdido', band.idToken, { n: 'Tempo Perdido', a: 'Legião Urbana', y: 1986, t: now, by: 'm-vocal' }), 200],
+    ['música da banda sem artista recusada', () => db('PUT', 'rockshero/custom/nossa--x--y', band.idToken, { n: 'Só o nome', t: now }), 401],
+    ['música da banda com nome vazio recusada', () => db('PUT', 'rockshero/custom/nossa--x--y', band.idToken, { n: '', a: 'Artista', t: now }), 401],
+    ['música da banda com ano absurdo recusada', () => db('PUT', 'rockshero/custom/nossa--x--y', band.idToken, { n: 'Nome', a: 'Artista', y: 1200, t: now }), 401],
+    ['música da banda com id fora do padrão recusada', () => db('PUT', 'rockshero/custom/a--b', band.idToken, { n: 'Nome', a: 'Artista', t: now }), 401],
     ['nó desconhecido em /rockshero recusado', () => db('PUT', 'rockshero/lixo', band.idToken, { a: 1 }), 401],
     ['update multi-caminho válido', () => db('PATCH', 'rockshero', band.idToken, {
       'progress/a--b/m-baixo': { v: 40, t: now, by: 'm-baixo' },

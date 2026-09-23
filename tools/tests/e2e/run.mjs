@@ -585,6 +585,54 @@ await step('diário de ensaio e gráfico de evolução', async () => {
   await devF.context.close();
 });
 
+await step('música fora do Guitar Hero: cadastra no A, aparece no B e some ao apagar', async () => {
+  const id = 'nossa--legiao-urbana--tempo-perdido';
+  await pageA.evaluate(() => { location.hash = '#/musicas/nossas'; });
+  await pageA.waitForSelector('[data-add-song]');
+  await pageA.click('[data-add-song]');
+  await pageA.waitForSelector('.custom-song-sheet [data-custom-form]', { visible: true });
+  await pageA.type('.custom-song-sheet input[name=artist]', 'Legião Urbana');
+  await pageA.type('.custom-song-sheet input[name=title]', 'Tempo Perdido');
+  await pageA.type('.custom-song-sheet input[name=year]', '1986');
+  await pageA.keyboard.press('Enter'); // Enter no formulário envia (clicar durante a animação do painel escorrega)
+  const leaf = await waitForServer(`custom/${id}`, (v) => v && v.n === 'Tempo Perdido');
+  assert.equal(leaf.a, 'Legião Urbana');
+  assert.equal(leaf.y, 1986);
+  // o painel dela abre para completar afinação e companhia
+  await pageA.waitForSelector('.song-sheet.is-open [data-edit-song]');
+  assert.equal(await pageA.$eval('.song-sheet.is-open .sheet-head h2', (el) => el.textContent), 'Tempo Perdido');
+  await pageA.keyboard.press('Escape');
+  await pageA.waitForSelector(`.song-row[data-id="${id}"]`);
+
+  // no outro aparelho ela é uma música como as outras: busca, set list e progresso
+  await pageB.evaluate(() => { location.hash = '#/musicas/todas'; });
+  await pageB.waitForSelector('[data-filter="q"]');
+  await pageB.type('[data-filter="q"]', 'tempo perdido');
+  await pageB.waitForFunction((songId) => {
+    const row = document.querySelector(`.song-row[data-id="${songId}"]`);
+    return row && !row.hidden && row.querySelector('.badge-own');
+  }, { timeout: 10000 }, id);
+  // na aba "Nossas" ela fica sozinha, fora do caminho da barra de filtros
+  await pageB.evaluate(() => { location.hash = '#/musicas/nossas'; });
+  await pageB.waitForSelector(`.song-row[data-id="${id}"] [data-toggle]`);
+  assert.equal((await pageB.$$('.song-row')).length, 1);
+  await pageB.click(`.song-row[data-id="${id}"] [data-toggle]`);
+  await waitForServer('setlists', (v) => v && Object.values(v).some((l) => l.items && l.items[id]));
+  await pageB.evaluate((songId) => RH.store.setProgress(songId, 'm-vocal', 80), id);
+  await waitForServer(`progress/${id}/m-vocal`, (v) => v && v.v === 80);
+
+  // apagar no A leva junto o progresso e o lugar no set list
+  await pageA.evaluate((songId) => RH.songSheet.open(songId), id);
+  await pageA.waitForSelector('.song-sheet.is-open [data-delete-song]');
+  await pageA.click('.song-sheet.is-open [data-delete-song]');
+  await pageA.waitForFunction(() => document.activeElement && document.activeElement.matches('[data-answer="yes"]'), { timeout: 10000 });
+  await pageA.keyboard.press('Enter');
+  await waitForServer(`custom/${id}`, (v) => v == null);
+  assert.equal(await serverRead(`progress/${id}`), null);
+  await pageB.waitForFunction((songId) => !document.querySelector(`.song-row[data-id="${songId}"]`), { timeout: 10000 }, id);
+  assert.equal(await pageB.evaluate((songId) => RH.store.inSetlist(songId), id), false, 'saiu do set list no outro aparelho');
+});
+
 await step('nenhuma requisição externa (sem scripts do Google; só as bases públicas de letras)', async () => {
   assert.deepEqual([...externalRequests].filter((u) => !LYRICS_HOSTS.test(u)), []);
 });

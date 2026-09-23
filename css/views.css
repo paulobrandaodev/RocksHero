@@ -531,6 +531,15 @@
   font-size: 15px;
 }
 
+/* Banner da aba "Nossas": o botão de cadastrar fica junto do texto. */
+.banner-actions {
+  margin-top: 10px;
+}
+
+.banner-own .emblem span {
+  font-size: 26px;
+}
+
 .banner-meter {
   display: grid;
   justify-items: center;

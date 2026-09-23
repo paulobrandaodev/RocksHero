@@ -63,6 +63,7 @@ RH.views.band = (() => {
     const archived = s.allMembers().filter((m) => m.archived);
     const me = s.me();
     const status = s.status;
+    const own = s.customSongs().length;
     const active = document.activeElement;
     const focusKey = active && active.dataset && active.closest('[data-member]')
       ? `${active.closest('[data-member]').dataset.member}|${active.dataset.field || active.dataset.move || ''}` : null;
@@ -123,7 +124,7 @@ RH.views.band = (() => {
           <dl class="info-list">
             <div><dt>Modo</dt><dd>${modeLabel()}</dd></div>
             <div><dt>Sincronização</dt><dd>${status.mode === 'local' ? 'desligada' : status.error ? 'com erro' : status.connected ? 'conectado' : 'offline'}${status.pending ? ` · ${status.pending} pendente(s)` : ''}</dd></div>
-            <div><dt>Catálogo</dt><dd>${Object.keys(RH.SONGS).length} músicas · ${RH.GAMES.length} jogos</dd></div>
+            <div><dt>Catálogo</dt><dd>${Object.keys(RH.SONGS).length} músicas · ${RH.GAMES.length} jogos${own ? ` · ${own} da banda` : ''}</dd></div>
             <div><dt>Versão</dt><dd>${esc(RH.VERSION)}</dd></div>
           </dl>
           ${RH.settings && RH.settings.mode === 'local' ? '<p>Para a banda toda ver o mesmo progresso, configure o Firebase (passo a passo no README).</p>' : ''}

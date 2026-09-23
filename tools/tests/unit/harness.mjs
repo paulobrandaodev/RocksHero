@@ -29,8 +29,9 @@ export function loadApp({ files = ['js/constants.js', 'js/util.js', 'js/store.js
   for (const file of files) {
     vm.runInContext(readFileSync(join(root, file), 'utf8'), context, { filename: file });
   }
-  if (songs) context.RH.SONGS = songs;
-  if (meta) context.RH.META = meta;
+  // Cópia por contexto: o app escreve em RH.SONGS (músicas cadastradas pela banda).
+  if (songs) context.RH.SONGS = plain(songs);
+  if (meta) context.RH.META = plain(meta);
   return context;
 }
 

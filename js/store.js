@@ -13,6 +13,7 @@
      wants/{songId}/{memberId}:    {v: true, t}        ("quero tocar")
      history/{songId}/{memberId}/{AAAA-MM-DD}: {v, t}  (último progresso de cada dia)
      rehearsals/{rehearsalId}:     {date, note, songs: {songId: true}, t, by}  (diário de ensaio)
+     custom/{songId}:              {n: título, a: artista, y?: ano, t, by}  (música fora do Guitar Hero)
 
    `remote` é a última cópia conhecida do servidor (também guardada em cache).
    `journal` guarda edições ainda não confirmadas, sobrevive a recarregar a página
@@ -66,7 +67,7 @@ RH.createStore = (adapter, options = {}) => {
 
   const diff = (prev, next) => {
     const songs = new Set();
-    for (const branch of ['progress', 'overrides', 'notes', 'wants', 'history']) {
+    for (const branch of ['progress', 'overrides', 'notes', 'wants', 'history', 'custom']) {
       const a = prev[branch] || {};
       const b = next[branch] || {};
       for (const id of new Set([...Object.keys(a), ...Object.keys(b)])) {
@@ -76,7 +77,8 @@ RH.createStore = (adapter, options = {}) => {
     const members = !same(prev.members, next.members);
     const setlist = !same(prev.setlists, next.setlists);
     const rehearsals = !same(prev.rehearsals, next.rehearsals);
-    return { songs, members, setlist, rehearsals, any: members || setlist || rehearsals || songs.size > 0 };
+    const custom = !same(prev.custom, next.custom);
+    return { songs, members, setlist, rehearsals, custom, any: members || setlist || rehearsals || custom || songs.size > 0 };
   };
 
   const rebuild = () => {
@@ -84,6 +86,7 @@ RH.createStore = (adapter, options = {}) => {
     for (const [path, entry] of Object.entries(journal)) U.setPath(next, path, U.clone(entry.value));
     const changes = diff(state, next);
     state = next;
+    if (changes.custom) syncCatalog();
     return changes;
   };
 
@@ -321,6 +324,98 @@ RH.createStore = (adapter, options = {}) => {
     const leaf = { val: v, t: now() };
     if (me()) leaf.by = me();
     write({ [path]: leaf });
+  };
+
+  // ---------- músicas fora do Guitar Hero ----------
+
+  /* A banda cadastra artista e nome; o registro entra no catálogo em memória (RH.SONGS) com o
+     mesmo formato das músicas dos jogos, então set list, palco, ensaios, letra, progresso,
+     correções e PDF funcionam sem saber que ela veio daqui. */
+
+  const CUSTOM_PREFIX = 'nossa--';
+  const CUSTOM_TEXT_MAX = 80;
+  const CUSTOM_YEAR = [1900, 2100];
+
+  const slug = (text) => U.fold(text).replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 44);
+
+  const cleanText = (v) => String(v == null ? '' : v).replace(/\s+/g, ' ').trim().slice(0, CUSTOM_TEXT_MAX);
+
+  const customLeaf = (leaf) => (leaf && typeof leaf.n === 'string' && leaf.n && typeof leaf.a === 'string' ? leaf : null);
+
+  const customSong = (songId) => customLeaf(state.custom && state.custom[songId]);
+
+  const isCustom = (songId) => !!customSong(songId);
+
+  const customSongs = () => Object.keys(state.custom || {})
+    .filter((id) => customSong(id))
+    .map((id) => ({ id, ...state.custom[id] }))
+    .sort((a, b) => String(a.a).localeCompare(String(b.a), 'pt-BR') || String(a.n).localeCompare(String(b.n), 'pt-BR'));
+
+  // Espelha `custom` em RH.SONGS (e na busca do catálogo). Roda a cada mudança do ramo.
+  let merged = [];
+  const syncCatalog = () => {
+    const songs = RH.SONGS || (RH.SONGS = {});
+    const next = [];
+    for (const [id, raw] of Object.entries(state.custom || {})) {
+      const leaf = customLeaf(raw);
+      if (!leaf) continue;
+      songs[id] = { t: leaf.n, a: leaf.a, y: typeof leaf.y === 'number' ? leaf.y : null, custom: true };
+      if (RH.catalog) RH.catalog.search[id] = U.fold(`${leaf.n} ${leaf.a}`);
+      next.push(id);
+    }
+    for (const id of merged) {
+      if (next.includes(id)) continue;
+      delete songs[id];
+      if (RH.catalog) delete RH.catalog.search[id];
+    }
+    merged = next;
+  };
+
+  // "nossa--legiao-urbana--tempo-perdido"; se já existir, vira "…-2".
+  const freeCustomId = (base) => {
+    let id = base;
+    for (let n = 2; SONGS()[id]; n++) id = `${base}-${n}`;
+    return id;
+  };
+
+  // Mesma música já cadastrada (do jogo ou da banda): compara artista + título sem acento.
+  const findSongByName = (title, artist) => {
+    const key = U.fold(`${cleanText(title)} ${cleanText(artist)}`);
+    const all = SONGS();
+    return Object.keys(all).find((id) => U.fold(`${all[id].t} ${all[id].a}`) === key) || null;
+  };
+
+  const saveCustomSong = ({ id, title, artist, year } = {}) => {
+    const n = cleanText(title);
+    const a = cleanText(artist);
+    if (!n) throw new Error('Escreva o nome da música.');
+    if (!a) throw new Error('Escreva o artista.');
+    if (id && !customSong(id)) throw new Error('Essa música não foi cadastrada pela banda.');
+    const songId = id || freeCustomId(`${CUSTOM_PREFIX}${slug(a) || 'artista'}--${slug(n) || 'musica'}`);
+    const leaf = { n, a, t: now() };
+    const y = Math.round(Number(year));
+    if (Number.isInteger(y) && y >= CUSTOM_YEAR[0] && y <= CUSTOM_YEAR[1]) leaf.y = y;
+    const by = id ? (state.custom[id].by || me()) : me();
+    if (by) leaf.by = by;
+    write({ [`custom/${songId}`]: leaf });
+    return songId;
+  };
+
+  // Apagar leva junto tudo o que só fazia sentido com ela (progresso, correções, set lists, ensaios).
+  const deleteCustomSong = (songId) => {
+    if (!customSong(songId)) return 0;
+    const updates = { [`custom/${songId}`]: null };
+    for (const branch of ['progress', 'overrides', 'notes', 'wants', 'history']) {
+      if (state[branch] && state[branch][songId]) updates[`${branch}/${songId}`] = null;
+    }
+    for (const [listId, node] of Object.entries(state.setlists || {})) {
+      if (node && node.items && node.items[songId]) updates[`setlists/${listId}/items/${songId}`] = null;
+    }
+    for (const [rid, r] of Object.entries(state.rehearsals || {})) {
+      if (r && r.songs && r.songs[songId]) updates[`rehearsals/${rid}/songs/${songId}`] = null;
+    }
+    write(updates);
+    return Object.keys(updates).length;
   };
 
   // ---------- histórico do progresso ----------
@@ -782,6 +877,7 @@ RH.createStore = (adapter, options = {}) => {
     dur: (o) => o && Number.isInteger(o.val) && o.val >= NUMBER_FIELDS.dur[0] && o.val <= NUMBER_FIELDS.dur[1],
     bpm: (o) => o && Number.isInteger(o.val) && o.val >= NUMBER_FIELDS.bpm[0] && o.val <= NUMBER_FIELDS.bpm[1],
     want: (w) => w && w.v === true,
+    custom: (c) => c && typeof c.n === 'string' && c.n.trim() && typeof c.a === 'string' && c.a.trim(),
     day: (d) => d && (d.v === 'na' || (typeof d.v === 'number' && d.v >= 0 && d.v <= 100)),
     rehearsal: (r) => r && /^\d{4}-\d{2}-\d{2}$/.test(r.date || '') && (r.note == null || (typeof r.note === 'string' && r.note.length <= NOTE_REHEARSAL_MAX)),
   };
@@ -792,7 +888,9 @@ RH.createStore = (adapter, options = {}) => {
     const limit = now();
     const updates = {};
     const memberIdOk = (id) => /^m-[a-z0-9-]+$/.test(id) && id.length <= 42;
-    const songOk = (id) => !!SONGS()[id];
+    // As músicas da banda entram antes: sem elas, o progresso e os set lists delas seriam descartados.
+    const customIn = new Set();
+    const songOk = (id) => !!SONGS()[id] || customIn.has(id);
     const consider = (path, value, kind) => {
       if (!validLeaf[kind](value)) return;
       const t = typeof value.t === 'number' ? Math.min(value.t, limit) : 0;
@@ -801,6 +899,15 @@ RH.createStore = (adapter, options = {}) => {
       const clean = { ...U.clone(value), t };
       updates[path] = clean;
     };
+    const customIdOk = (id) => new RegExp(`^${CUSTOM_PREFIX}[a-z0-9-]+$`).test(id) && id.length <= 120;
+    for (const [id, c] of Object.entries(incoming.custom || {})) {
+      if (!customIdOk(id) || !validLeaf.custom(c)) continue;
+      const clean = { n: cleanText(c.n), a: cleanText(c.a), t: c.t };
+      if (Number.isInteger(c.y) && c.y >= CUSTOM_YEAR[0] && c.y <= CUSTOM_YEAR[1]) clean.y = c.y;
+      if (typeof c.by === 'string' && c.by.length <= 42) clean.by = c.by;
+      consider(`custom/${id}`, clean, 'custom');
+      if (updates[`custom/${id}`] || customSong(id)) customIn.add(id);
+    }
     for (const [id, m] of Object.entries(incoming.members || {})) {
       if (!memberIdOk(id)) continue;
       const clean = { name: String(m.name).slice(0, 40), instrument: m.instrument, order: m.order, t: m.t };
@@ -948,6 +1055,13 @@ RH.createStore = (adapter, options = {}) => {
     wanters,
     setWant,
     wantScore,
+    isCustom,
+    customSong,
+    customSongs,
+    findSongByName,
+    saveCustomSong,
+    deleteCustomSong,
+    CUSTOM_TEXT_MAX,
     setlists,
     currentSetlistId,
     selectSetlist,

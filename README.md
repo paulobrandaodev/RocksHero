@@ -7,6 +7,7 @@ App da banda **Rocks Hero** para acompanhar quanto cada membro já tirou das mú
 - **Set List**: vários set lists (show, ensaio, acústico…), cada um com data, tempo combinado com a casa e tempo por troca de afinação. Arraste pelas gemas para ordenar. O resumo traz o rock meter da banda, a duração total ("sobram 4 min"), as trocas de afinação (com botão **Otimizar**, que agrupa as músicas pela afinação sem mexer na abertura e no encerramento), as partes sem membro e a energia do set (BPM de cada música). Imprime a folha de cada músico com as observações dele. Set list marcado como **Show realizado** entra no histórico de shows.
 - **Modo Palco**: tela cheia para o pedestal no show. Música atual em letra grande, a próxima, aviso de troca de afinação, suas observações, cronômetro (adiantado/atrasado) e a letra rolando sozinha. Avança com toque, deslizando, com as setas/Page Down ou com um pedal Bluetooth. Mantém a tela acesa e funciona sem internet (as letras do set ficam no aparelho).
 - **Ensaios**: diário de ensaio (data, músicas passadas, observação), gráfico de músicas prontas de cada membro e da banda ao longo do tempo, músicas paradas há semanas e prioridade de ensaio (quem quer tocar × quanto já está pronta).
+- **Nossas músicas**: aba para o que a banda toca e não está em nenhum Guitar Hero. Cadastre **artista e nome** (o ano é opcional) e a música passa a valer como qualquer outra: entra na busca, no set list, no Modo Palco, nos ensaios e no backup, com afinação, instrumentação, duração, BPM, letra e progresso de cada membro.
 - **Banda**: formação, "quem é você" em cada aparelho e backup.
 
 Senha da banda: `Hero@123`.
@@ -43,7 +44,7 @@ O plano gratuito (Spark) sobra para uma banda.
    - Em *Usuários › Adicionar usuário*, use o e-mail `rockshero@example.com` (é o `bandEmail` do arquivo de config) e a senha **`Hero@123`**.
    - Copie o **UID** do usuário criado.
    - Em *Configurações › Ações do usuário* (em inglês, *User actions*), **desmarque a opção de permitir criação de contas** (*Enable create (sign-up)*). Assim ninguém cria outra conta com a sua apiKey.
-6. **Regras do banco** (repita este passo sempre que `database.rules.json` mudar; **a versão 1.2.0 mudou as regras**): abra `database.rules.json`, troque `UID_DA_BANDA` (aparece 2 vezes) pelo UID copiado. Cole o conteúdo em *Realtime Database › Regras* e clique em **Publicar**.
+6. **Regras do banco** (repita este passo sempre que `database.rules.json` mudar; **as versões 1.2.0 e 1.3.0 mudaram as regras**): abra `database.rules.json`, troque `UID_DA_BANDA` (aparece 2 vezes) pelo UID copiado. Cole o conteúdo em *Realtime Database › Regras* e clique em **Publicar**.
 
 Pronto: abra o app, digite `Hero@123` e o status no topo deve mostrar **Sincronizado**.
 
@@ -71,6 +72,7 @@ Na tela **Banda › Backup**, *Exportar* baixa um `.json` com todo o progresso, 
 
 ## 5. Sobre os dados das músicas
 
+- **Músicas da banda**: as cadastradas na aba *Nossas* ficam no próprio banco da banda (ramo `custom`), não nos arquivos de `data/`. Entram no catálogo em memória quando o app abre, então valem em todas as telas. Apagar uma delas leva junto o progresso, as observações e o lugar dela nos set lists e ensaios.
 - **Listas de músicas**: tiradas da Wikipedia (revisões fixadas em `tools/data/sources.json`, licença CC BY-SA 4.0). São 778 faixas de disco (com bônus, sem DLC), que viram 719 músicas únicas.
 - **Afinação e instrumentação**: preenchidas à mão, a partir da gravação original.
   - Das 719, **183 estão confirmadas**, **490 aparecem com "?" (a confirmar)** e 46 são desconhecidas (bônus de bandas independentes).
