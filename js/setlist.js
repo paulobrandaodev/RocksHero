@@ -1,5 +1,5 @@
 /* Tela Set List: vários set lists (show, ensaio, acústico), ordem, afinações, tempo do show,
-   mediana da banda, impressão com as observações de cada músico e histórico de shows. */
+   média da banda, impressão com as observações de cada músico e histórico de shows. */
 window.RH = window.RH || {};
 RH.views = RH.views || {};
 
@@ -113,7 +113,7 @@ RH.views.setlist = (() => {
     const sum = s.setlistSummary();
     const t = sum.timing;
     const weakest = sum.weakest
-      ? `<button type="button" class="link-btn" data-open="${sum.weakest.id}">${esc(RH.SONGS[sum.weakest.id].t)}</button> <span class="faint">(${sum.weakest.median}%)</span>`
+      ? `<button type="button" class="link-btn" data-open="${sum.weakest.id}">${esc(RH.SONGS[sum.weakest.id].t)}</button> <span class="faint">(${sum.weakest.average}%)</span>`
       : '—';
     const parts = Object.entries(sum.parts).map(([key, n]) => {
       const part = RH.PARTS.find((p) => p.key === key);
@@ -122,8 +122,8 @@ RH.views.setlist = (() => {
     const items = s.setlist().items;
     return `
       <div class="summary-meter">
-        ${ui.rockMeter(sum.overall, { label: 'Mediana do set' })}
-        <span class="label">Mediana do set</span>
+        ${ui.rockMeter(sum.overall, { label: 'Média do set' })}
+        <span class="label">Média do set</span>
       </div>
       <dl class="summary-stats">
         <div><dt>Músicas</dt><dd>${sum.count}</dd></div>
@@ -181,7 +181,7 @@ RH.views.setlist = (() => {
             ${info ? `<span class="sl-info">${info}</span>` : ''}
           </div>
           <div class="sl-tech">${ui.tuningBadge(s.tuning(item.id))}${ui.instruments(s, item.id, { inline: true })}</div>
-          ${ui.score(s.median(item.id))}
+          ${ui.score(s.average(item.id))}
           <div class="sl-actions">
             <button type="button" data-move="-1" aria-label="Subir"${index === 0 ? ' disabled' : ''}>${RH.icons.svg('up')}</button>
             <button type="button" data-move="1" aria-label="Descer">${RH.icons.svg('down')}</button>

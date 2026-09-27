@@ -47,12 +47,7 @@ RH.util = (() => {
     };
   })();
 
-  const median = (values) => {
-    if (!values.length) return null;
-    const sorted = values.slice().sort((a, b) => a - b);
-    const mid = sorted.length >> 1;
-    return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
-  };
+  const average = (values) => (values.length ? values.reduce((a, b) => a + b, 0) / values.length : null);
 
   const randomId = () => {
     const bytes = new Uint8Array(8);
@@ -177,7 +172,7 @@ RH.util = (() => {
   };
 
   return {
-    sha256, median, randomId, fold, escapeHtml, clone, clamp, debounce,
+    sha256, average, randomId, fold, escapeHtml, clone, clamp, debounce,
     getPath, setPath, assertLeafPaths, positionBetween, needsRenormalize,
     dayKey, dayStart, dayRange, formatDay, formatDuration, parseDuration, formatMinutes,
   };

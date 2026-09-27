@@ -27,7 +27,7 @@ RH.ui = (() => {
   // 0% fica neutro (não começada); o vermelho é para quem já começou e está no início.
   const score = (pct, { showStars = true } = {}) => `
     <div class="score ${pct === 0 ? 'lv-none' : levelClass(pct)}">
-      <span class="num${pct == null ? ' is-empty' : ''}" title="Mediana da banda">${pct == null ? '—' : `${pct}<small>%</small>`}</span>
+      <span class="num${pct == null ? ' is-empty' : ''}" title="Média da banda">${pct == null ? '—' : `${pct}<small>%</small>`}</span>
       ${showStars ? stars(pct) : ''}
     </div>`;
 

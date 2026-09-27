@@ -265,19 +265,19 @@ RH.createStore = (adapter, options = {}) => {
     });
   };
 
-  const medianFrom = (songId, valueOf) => {
+  const averageFrom = (songId, valueOf) => {
     const list = applicableFrom(songId, valueOf);
     if (!list.length) return null;
     const values = list.map((m) => {
       const leaf = valueOf(m.id);
       return leaf && typeof leaf.v === 'number' ? leaf.v : 0;
     });
-    return Math.round(U.median(values));
+    return Math.round(U.average(values));
   };
 
   const applicableMembers = (songId) => applicableFrom(songId, (memberId) => progress(songId, memberId));
 
-  const median = (songId) => medianFrom(songId, (memberId) => progress(songId, memberId));
+  const average = (songId) => averageFrom(songId, (memberId) => progress(songId, memberId));
 
   const lineupCounts = () => {
     const have = {};
@@ -435,7 +435,7 @@ RH.createStore = (adapter, options = {}) => {
     return points.sort((a, b) => a.day.localeCompare(b.day) || a.t - b.t);
   };
 
-  // Linha do tempo de músicas prontas (>= limiar): uma série por membro e a da banda (mediana).
+  // Linha do tempo de músicas prontas (>= limiar): uma série por membro e a da banda (média).
   // Devolve {days: [...], series: [{id, name, instrument, values: [...]}]} amostrado por dia.
   const readyTimeline = ({ from, to = U.dayKey(now()), threshold = 80, songIds = null } = {}) => {
     const events = []; // {day, songId, memberId, v}
@@ -451,7 +451,7 @@ RH.createStore = (adapter, options = {}) => {
     const days = U.dayRange(start, to);
     const values = {}; // songId → memberId → leaf
     const valueOf = (songId) => (memberId) => (values[songId] && values[songId][memberId]) || null;
-    const series = [...active.map((m) => ({ id: m.id, name: m.name, instrument: m.instrument, values: [] })), { id: 'band', name: 'Banda (mediana)', values: [] }];
+    const series = [...active.map((m) => ({ id: m.id, name: m.name, instrument: m.instrument, values: [] })), { id: 'band', name: 'Banda (média)', values: [] }];
     const count = {};
     const bandReady = new Set();
     const ready = (songId, memberId) => {
@@ -466,7 +466,7 @@ RH.createStore = (adapter, options = {}) => {
         (values[e.songId] = values[e.songId] || {})[e.memberId] = { v: e.v };
         const is = ready(e.songId, e.memberId);
         if (was !== is) count[e.memberId] = (count[e.memberId] || 0) + (is ? 1 : -1);
-        const med = medianFrom(e.songId, valueOf(e.songId));
+        const med = averageFrom(e.songId, valueOf(e.songId));
         if (med != null && med >= threshold) bandReady.add(e.songId);
         else bandReady.delete(e.songId);
       }
@@ -495,10 +495,10 @@ RH.createStore = (adapter, options = {}) => {
     const out = [];
     for (const id of ids) {
       if (!SONGS()[id]) continue;
-      const med = median(id);
+      const med = average(id);
       if (med != null && med >= 100) continue;
       const t = lastActivity(id);
-      if (t == null || t < limit) out.push({ id, t, median: med, inSetlist: inSetlist(id) });
+      if (t == null || t < limit) out.push({ id, t, average: med, inSetlist: inSetlist(id) });
     }
     return out.sort((a, b) => (a.t || 0) - (b.t || 0));
   };
@@ -545,7 +545,7 @@ RH.createStore = (adapter, options = {}) => {
     const n = wanters(songId).length;
     if (!n) return 0;
     const players = applicableMembers(songId).length || members().length || 1;
-    const med = median(songId) || 0;
+    const med = average(songId) || 0;
     return Math.min(1, n / players) * 100 + (med >= 100 ? -60 : med * 0.6);
   };
 
@@ -753,9 +753,9 @@ RH.createStore = (adapter, options = {}) => {
 
   const setlistSummary = (listId = currentSetlistId()) => {
     const items = setlist(listId).items;
-    const withMedian = items.map((it) => ({ id: it.id, median: median(it.id) })).filter((x) => x.median != null);
-    const overall = withMedian.length ? Math.round(U.median(withMedian.map((x) => x.median))) : null;
-    const weakest = withMedian.length ? withMedian.reduce((a, b) => (b.median < a.median ? b : a)) : null;
+    const withAverage = items.map((it) => ({ id: it.id, average: average(it.id) })).filter((x) => x.average != null);
+    const overall = withAverage.length ? Math.round(U.average(withAverage.map((x) => x.average))) : null;
+    const weakest = withAverage.length ? withAverage.reduce((a, b) => (b.average < a.average ? b : a)) : null;
     const parts = {};
     let songsWithGaps = 0;
     for (const it of items) {
@@ -1043,7 +1043,7 @@ RH.createStore = (adapter, options = {}) => {
     setNote,
     NOTE_MAX,
     applicableMembers,
-    median,
+    average,
     uncovered,
     duration,
     bpm,

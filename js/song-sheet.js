@@ -150,7 +150,7 @@ RH.songSheet = (() => {
     const tInfo = RH.tuningInfo(t.code);
     const ins = s.instrumentation(id);
     const gaps = s.uncovered(id);
-    const median = s.median(id);
+    const average = s.average(id);
     const applicable = new Set(s.applicableMembers(id).map((m) => m.id));
     const appearances = (RH.catalog.songGames[id] || []);
     const note = s.note(id);
@@ -213,7 +213,7 @@ RH.songSheet = (() => {
             <button type="button" data-set="clear" title="Limpar (volta ao padrão)" aria-label="Limpar">${RH.icons.svg('close')}</button>
           </div>
           <div class="progress-meta">
-            <span>${isNa && !explicitNa ? `${esc(member.name)} fica fora da mediana: a música não tem ${esc((RH.PARTS.find((p) => p.key === (RH.MEMBER_INSTRUMENTS[member.instrument] || {}).part) || { name: 'essa parte' }).name.toLowerCase())}.` : ''}</span>
+            <span>${isNa && !explicitNa ? `${esc(member.name)} fica fora da média: a música não tem ${esc((RH.PARTS.find((p) => p.key === (RH.MEMBER_INSTRUMENTS[member.instrument] || {}).part) || { name: 'essa parte' }).name.toLowerCase())}.` : ''}</span>
             <span>${leaf && leaf.t ? `Atualizado ${ui.formatWhen(leaf.t)}${leaf.by && s.state.members && s.state.members[leaf.by] ? ` por ${esc(s.state.members[leaf.by].name)}` : ''}` : 'Ainda sem registro'}</span>
           </div>
           ${noteFieldHtml(member)}
@@ -254,9 +254,9 @@ RH.songSheet = (() => {
             <div class="value">${ui.instruments(s, id, { inline: true })}</div>
             <div class="note">${esc(ui.insText(ins.counts))}${gapsText ? `<br>${esc(gapsText)}` : ''}</div>
           </div>
-          <div class="fact fact-median">
-            <span class="label">Mediana</span>
-            ${ui.score(median)}
+          <div class="fact fact-average">
+            <span class="label">Média</span>
+            ${ui.score(average)}
           </div>
         </div>
         ${note ? `<p class="song-note">${esc(note)}</p>` : ''}

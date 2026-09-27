@@ -987,7 +987,7 @@
   text-transform: none;
 }
 
-/* Três colunas: afinação e andamento | instrumentação | mediana. */
+/* Três colunas: afinação e andamento | instrumentação | média. */
 .song-facts {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 104px;
@@ -998,7 +998,7 @@
 .fact-tuning { grid-area: tun; }
 .fact-ins { grid-area: ins; }
 
-.fact-median {
+.fact-average {
   grid-area: med;
   display: flex;
   flex-direction: column;
@@ -1007,11 +1007,11 @@
   text-align: center;
 }
 
-.fact-median .label {
+.fact-average .label {
   margin-bottom: 4px;
 }
 
-.fact-median .score {
+.fact-average .score {
   align-items: center;
 }
 

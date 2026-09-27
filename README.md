@@ -2,7 +2,7 @@
 
 App da banda **Rocks Hero** para acompanhar quanto cada membro já tirou das músicas dos Guitar Hero e montar o set list do show. Feito em HTML, CSS e JavaScript puro: não tem etapa de build.
 
-- **Músicas**: uma aba por jogo, com as 719 músicas dos 13 Guitar Hero de console. Mostra a afinação original, os instrumentos e quanto cada membro já tirou, além da mediana da banda. Tem filtro por instrumentação (ex.: 2 guitarras e sem teclado) e botões para buscar a música no YouTube e no Spotify.
+- **Músicas**: uma aba por jogo, com as 719 músicas dos 13 Guitar Hero de console. Mostra a afinação original, os instrumentos e quanto cada membro já tirou, além da média da banda. Tem filtro por instrumentação (ex.: 2 guitarras e sem teclado) e botões para buscar a música no YouTube e no Spotify.
 - **Painel da música**: progresso e **observações de cada músico** (salvas enquanto digita e visíveis para a banda toda), duração e BPM, **letra** com rolagem automática, **metrônomo**, botão **Quero tocar**, gráfico da evolução de cada membro, quantas vezes foi tocada em show e ensaiada, correção de afinação/instrumentação/duração/BPM e onde a música aparece.
 - **Set List**: vários set lists (show, ensaio, acústico…), cada um com data, tempo combinado com a casa e tempo por troca de afinação. Arraste pelas gemas para ordenar. O resumo traz o rock meter da banda, a duração total ("sobram 4 min"), as trocas de afinação (com botão **Otimizar**, que agrupa as músicas pela afinação sem mexer na abertura e no encerramento), as partes sem membro e a energia do set (BPM de cada música). Imprime a folha de cada músico com as observações dele. Set list marcado como **Show realizado** entra no histórico de shows.
 - **Modo Palco**: tela cheia para o pedestal no show. Música atual em letra grande, a próxima, aviso de troca de afinação, suas observações, cronômetro (adiantado/atrasado) e a letra rolando sozinha. Avança com toque, deslizando, com as setas/Page Down ou com um pedal Bluetooth. Mantém a tela acesa e funciona sem internet (as letras do set ficam no aparelho).
@@ -80,7 +80,7 @@ Na tela **Banda › Backup**, *Exportar* baixa um `.json` com todo o progresso, 
   - A lista do que falta confirmar está em `tools/data/out/meta-a-confirmar.txt` (gerada pelo script).
 - **Instrumentação**: conta as partes do arranjo original (ex.: 2 guitarras). Partes que a formação atual não cobre aparecem apagadas.
 - **Duração e BPM**: da gravação de estúdio no Deezer (API pública), conferidos com o LRCLIB. 702 das 719 músicas têm duração e 532 têm BPM. O BPM medido pelo Deezer às vezes sai pela metade ou em dobro: esses casos e os BPMs preenchidos à mão estão em `tools/data/extra/manual.txt` e aparecem com "?" (a confirmar). A banda corrige no painel da música.
-- **Mediana da banda**: calculada com os membros que tocam na música. Fica de fora quem marcou N/A e quem toca um instrumento que a música não tem (ex.: o vocal numa instrumental). Quem ainda não registrou nada conta como 0%.
+- **Média da banda**: calculada com os membros que tocam na música e arredondada para um número inteiro. Fica de fora quem marcou N/A e quem toca um instrumento que a música não tem (ex.: o vocal numa instrumental). Quem ainda não registrou nada conta como 0%.
 
 ## 6. Para quem for mexer no código
 
@@ -103,7 +103,7 @@ npm install
 npm run data:fetch        # baixa as listas da Wikipedia (revisões fixadas)
 npm run data:extra        # busca duração e BPM no Deezer e confere no LRCLIB (retoma de onde parou)
 npm run data:build        # recria data/ a partir delas + tools/data/meta/*.txt + tools/data/extra/
-npm run test:unit         # lógica (mediana, diário offline, set list, importação…)
+npm run test:unit         # lógica (média, diário offline, set list, importação…)
 npm run emulators         # emuladores do Firebase (deixe rodando em outro terminal)
 npm run test:rules        # regras do banco
 npm run test:e2e          # app completo no Chrome: login, sincronização, offline, arrastar, impressão

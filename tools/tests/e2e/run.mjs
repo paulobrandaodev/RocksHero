@@ -546,7 +546,7 @@ await step('quero tocar, metrônomo e correção do BPM no painel da música', a
   await pageF.waitForFunction((songId) => document.querySelector(`.song-row[data-id="${songId}"] .want.is-mine`), { timeout: 15000 }, id);
   await pageF.select('[data-filter="sort"]', 'priority');
   await pageF.waitForFunction((songId) => { const r = document.querySelector('.song-row'); return r && r.dataset.id === songId; }, { timeout: 15000 }, id);
-  // coluna própria dos likes, antes da mediana
+  // coluna própria dos likes, antes da média
   const cols = await pageF.$eval('.song-row', (row) => [...row.children].map((c) => c.className.split(' ')[0]));
   assert.equal(cols[cols.indexOf('score') - 1], 'song-likes');
   await pageF.screenshot({ path: join(artifacts, 'catalogo-likes.png') });

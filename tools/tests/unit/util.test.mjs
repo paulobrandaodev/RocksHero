@@ -19,10 +19,10 @@ test('hash da senha do modo local corresponde a Hero@123', () => {
   assert.equal(U.sha256('rockshero:Hero@123'), 'a5647462c595810fbd4769adc8de83882e37b739b0b89a9f4c2d05a8d505edac');
 });
 
-test('mediana com quantidade ímpar, par e vazia', () => {
-  assert.equal(U.median([50, 10, 90]), 50);
-  assert.equal(U.median([0, 100, 40, 60]), 50);
-  assert.equal(U.median([]), null);
+test('média com valores inteiros, fracionária e vazia', () => {
+  assert.equal(U.average([50, 10, 90]), 50);
+  assert.equal(U.average([0, 100, 40, 70]), 52.5);
+  assert.equal(U.average([]), null);
 });
 
 test('setPath grava, remove e poda objetos vazios', () => {

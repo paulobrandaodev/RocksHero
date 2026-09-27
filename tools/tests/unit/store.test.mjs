@@ -49,48 +49,49 @@ test('primeiro acesso cria os 4 membros padrão uma única vez', async () => {
   assert.deepEqual(plain(a.store.members().map((m) => m.name)), ['Vocal', 'Guitarra', 'Baixo', 'Bateria']);
 });
 
-test('mediana considera instrumentação, N/A e valores explícitos', async () => {
+test('média considera instrumentação, N/A e valores explícitos', async () => {
   const server = newServer();
   const { store } = await started(server);
   store.setProgress('band--full', 'm-vocal', 100);
   store.setProgress('band--full', 'm-guitarra', 50);
   store.setProgress('band--full', 'm-baixo', 30);
-  // bateria sem valor conta 0 → [0, 30, 50, 100] → 40
-  assert.equal(store.median('band--full'), 40);
+  // bateria sem valor conta 0 → [0, 30, 50, 100] → 45
+  assert.equal(store.average('band--full'), 45);
 
-  // música instrumental: vocal não entra → [guitarra 80, baixo 60, bateria 0] → 60
+  // música instrumental: vocal não entra → [guitarra 80, baixo 60, bateria 0] → 46,67 → 47
   store.setProgress('band--instrumental', 'm-guitarra', 80);
   store.setProgress('band--instrumental', 'm-baixo', 60);
-  assert.equal(store.median('band--instrumental'), 60);
+  assert.equal(store.average('band--instrumental'), 47);
   assert.deepEqual(plain(store.applicableMembers('band--instrumental').map((m) => m.id)), ['m-guitarra', 'm-baixo', 'm-bateria']);
 
-  // se o vocal lançar valor numa instrumental, passa a contar
+  // se o vocal lançar valor numa instrumental, passa a contar → [100, 80, 60, 0] → 60
   store.setProgress('band--instrumental', 'm-vocal', 100);
-  assert.equal(store.median('band--instrumental'), 70);
+  assert.equal(store.average('band--instrumental'), 60);
 
-  // N/A tira da conta
+  // N/A tira da conta → [100, 50, 30] → 60
   store.setProgress('band--full', 'm-bateria', 'na');
-  assert.equal(store.median('band--full'), 50);
+  assert.equal(store.average('band--full'), 60);
 
-  // instrumentação desconhecida: todos entram
+  // instrumentação desconhecida: todos entram → [20, 0, 0, 0] → 5
   store.setProgress('band--unknown', 'm-vocal', 20);
   assert.equal(store.applicableMembers('band--unknown').length, 4);
-  assert.equal(store.median('band--unknown'), 0);
+  assert.equal(store.average('band--unknown'), 5);
 });
 
-test('membro arquivado sai da mediana e da formação', async () => {
+test('membro arquivado sai da média e da formação', async () => {
   const server = newServer();
   const { store } = await started(server);
   store.setProgress('band--full', 'm-vocal', 100);
   store.setProgress('band--full', 'm-guitarra', 100);
   store.setProgress('band--full', 'm-baixo', 100);
-  assert.equal(store.median('band--full'), 100);
+  // bateria sem valor conta 0 → [100, 100, 100, 0] → 75
+  assert.equal(store.average('band--full'), 75);
   store.saveMember({ id: 'm-bateria', archived: true });
   assert.equal(store.members().length, 3);
-  assert.equal(store.median('band--full'), 100);
+  assert.equal(store.average('band--full'), 100);
   store.saveMember({ id: 'm-bateria', archived: false });
   assert.equal(store.members().length, 4);
-  assert.equal(store.median('band--full'), 100);
+  assert.equal(store.average('band--full'), 75);
 });
 
 test('partes descobertas comparam instrumentação com a formação', async () => {
@@ -153,7 +154,7 @@ test('set list renormaliza quando as posições ficam coladas', async () => {
   assert.deepEqual(plain(items.map((i) => i.pos)), [1, 2, 3]);
 });
 
-test('resumo do set list: mediana geral, mais fraca e partes descobertas', async () => {
+test('resumo do set list: média geral, mais fraca e partes descobertas', async () => {
   const server = newServer();
   const { store } = await started(server);
   for (const m of ['m-vocal', 'm-guitarra', 'm-baixo', 'm-bateria']) {
@@ -165,7 +166,7 @@ test('resumo do set list: mediana geral, mais fraca e partes descobertas', async
   store.addToSetlist('band--drop');
   const s = plain(store.setlistSummary());
   assert.equal(s.count, 3);
-  assert.equal(s.overall, 20); // medianas [100, 20, 0] → 20
+  assert.equal(s.overall, 40); // médias [100, 20, 0] → 40
   assert.equal(s.weakest.id, 'band--drop');
   assert.equal(s.songsWithGaps, 2);
   assert.deepEqual(s.parts, { g: 1, k: 1 });

@@ -45,7 +45,9 @@ RH.views.catalog = (() => {
       const v = saved.ins && saved.ins[p.key];
       if (typeof v === 'string' && /^d$/.test(v) && Number(v) <= p.max) ins[p.key] = v;
     }
-    return { ...filters, ...saved, q: '', ins, insMode: saved.insMode === 'min' ? 'min' : 'exact', fits: !!saved.fits };
+    // "median-*" é o nome antigo de "average-*" (a conta passou a ser a média).
+    const sort = typeof saved.sort === 'string' ? saved.sort.replace(/^median-/, 'average-') : filters.sort;
+    return { ...filters, ...saved, q: '', ins, insMode: saved.insMode === 'min' ? 'min' : 'exact', fits: !!saved.fits, sort };
   };
 
   // ---------- filtro de instrumentação ----------
@@ -163,7 +165,7 @@ RH.views.catalog = (() => {
       else if (t.code !== filters.tuning) return false;
     }
     if (filters.status !== 'all') {
-      const med = s.median(id);
+      const med = s.average(id);
       const m = med == null ? 0 : med;
       if (filters.status === 'ready' && m < 80) return false;
       if (filters.status === 'progress' && (m === 0 || m >= 80)) return false;
@@ -218,7 +220,7 @@ RH.views.catalog = (() => {
         <div class="song-tech">${ui.tuningBadge(s.tuning(id))}${ui.instruments(s, id)}</div>
         <div class="song-bars${members.length > 4 ? ' is-many' : ''}">${bars}</div>
         <div class="song-likes">${ui.wantBadge(s.wanters(id).length, s.wants(id, s.me()))}</div>
-        ${ui.score(s.median(id))}
+        ${ui.score(s.average(id))}
         <button type="button" class="sl-toggle" data-toggle aria-pressed="${inSet}" title="${inSet ? 'Tirar do set list' : 'Adicionar ao set list'}" aria-label="${inSet ? 'Tirar do set list' : 'Adicionar ao set list'}">
           ${RH.icons.svg(inSet ? 'check' : 'plus')}
         </button>
@@ -264,7 +266,7 @@ RH.views.catalog = (() => {
     let ready = 0;
     let sum = 0;
     for (const id of ids) {
-      const m = s.median(id) || 0;
+      const m = s.average(id) || 0;
       sum += m;
       if (m >= 80) ready++;
     }
@@ -358,8 +360,8 @@ RH.views.catalog = (() => {
         <label><span class="visually-hidden">Ordenar</span>
           <select class="select" data-filter="sort">
             ${opt('sort', 'game', gameId === 'todas' ? 'Ordem alfabética' : gameId === OWN ? 'Por artista' : 'Ordem do jogo')}
-            ${opt('sort', 'median-desc', 'Mais prontas primeiro')}
-            ${opt('sort', 'median-asc', 'Menos prontas primeiro')}
+            ${opt('sort', 'average-desc', 'Mais prontas primeiro')}
+            ${opt('sort', 'average-asc', 'Menos prontas primeiro')}
             ${opt('sort', 'priority', 'Prioridade de ensaio')}
             ${opt('sort', 'wanted-desc', 'Mais votadas')}
             ${opt('sort', 'bpm', 'Andamento (BPM)')}
@@ -390,16 +392,16 @@ RH.views.catalog = (() => {
       title: (a, b) => collator.compare(title(a), title(b)),
       artist: (a, b) => collator.compare(RH.SONGS[a.id].a, RH.SONGS[b.id].a) || collator.compare(title(a), title(b)),
       year: (a, b) => RH.SONGS[a.id].y - RH.SONGS[b.id].y || collator.compare(title(a), title(b)),
-      'median-desc': (a, b) => (s.median(b.id) || 0) - (s.median(a.id) || 0) || collator.compare(title(a), title(b)),
-      'median-asc': (a, b) => (s.median(a.id) || 0) - (s.median(b.id) || 0) || collator.compare(title(a), title(b)),
-      priority: (a, b) => s.wantScore(b.id) - s.wantScore(a.id) || (s.median(b.id) || 0) - (s.median(a.id) || 0) || collator.compare(title(a), title(b)),
+      'average-desc': (a, b) => (s.average(b.id) || 0) - (s.average(a.id) || 0) || collator.compare(title(a), title(b)),
+      'average-asc': (a, b) => (s.average(a.id) || 0) - (s.average(b.id) || 0) || collator.compare(title(a), title(b)),
+      priority: (a, b) => s.wantScore(b.id) - s.wantScore(a.id) || (s.average(b.id) || 0) - (s.average(a.id) || 0) || collator.compare(title(a), title(b)),
       'wanted-desc': (a, b) => s.wanters(b.id).length - s.wanters(a.id).length || collator.compare(title(a), title(b)),
       // sem BPM/duração vão para o fim
       bpm: (a, b) => (s.bpm(a.id).val || 999) - (s.bpm(b.id).val || 999) || collator.compare(title(a), title(b)),
       duration: (a, b) => (s.duration(a.id).sec || 1e6) - (s.duration(b.id).sec || 1e6) || collator.compare(title(a), title(b)),
     }[filters.sort];
     items.sort(cmp);
-    const label = { title: 'Por título', artist: 'Por artista', year: 'Por ano', 'median-desc': 'Mais prontas primeiro', 'median-asc': 'Menos prontas primeiro', priority: 'Prioridade de ensaio (quem quer tocar × quanto já está pronta)', 'wanted-desc': 'Mais votadas (quantos querem tocar)', bpm: 'Do mais lento ao mais rápido', duration: 'Da mais curta à mais longa' }[filters.sort];
+    const label = { title: 'Por título', artist: 'Por artista', year: 'Por ano', 'average-desc': 'Mais prontas primeiro', 'average-asc': 'Menos prontas primeiro', priority: 'Prioridade de ensaio (quem quer tocar × quanto já está pronta)', 'wanted-desc': 'Mais votadas (quantos querem tocar)', bpm: 'Do mais lento ao mais rápido', duration: 'Da mais curta à mais longa' }[filters.sort];
     return [{ key: 'sorted', name: label, entries: items }];
   };
 
@@ -636,7 +638,7 @@ RH.views.catalog = (() => {
       updateBanner();
       return;
     }
-    // Ao ordenar por mediana, a ordem fica estável enquanto a banda edita; reordena ao trocar o filtro.
+    // Ao ordenar por média, a ordem fica estável enquanto a banda edita; reordena ao trocar o filtro.
     if (changes.songs.size) {
       for (const id of changes.songs) updateRow(id);
       updateBanner();

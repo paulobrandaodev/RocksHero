@@ -30,7 +30,7 @@ RH.views.rehearsals = (() => {
     return `
       <section class="reh-card panel panel-rivets reh-chart">
         <h2 class="fire-text">Evolução</h2>
-        <p class="dim small">Músicas prontas (80% ou mais) de cada membro e da banda (pela mediana), dia a dia.</p>
+        <p class="dim small">Músicas prontas (80% ou mais) de cada membro e da banda (pela média), dia a dia.</p>
         <div class="reh-chart-controls">
           <div class="seg" role="group" aria-label="Período">${seg('period', 30, '30 dias')}${seg('period', 90, '3 meses')}${seg('period', 365, '1 ano')}</div>
           <div class="seg" role="group" aria-label="Quais músicas">${seg('scope', 'all', 'Todas')}${seg('scope', 'setlist', 'Set list atual')}</div>
@@ -50,7 +50,7 @@ RH.views.rehearsals = (() => {
           <li><button type="button" class="reh-song" data-open="${esc(x.id)}">
             <span class="t">${esc(RH.SONGS[x.id].t)}${x.inSetlist ? ' <span class="badge badge-ver">no set</span>' : ''}</span>
             <span class="s">${esc(RH.SONGS[x.id].a)} · ${x.t ? `parada ${esc(ago(x.t))}` : 'ainda ninguém mexeu'}</span>
-            ${ui.score(x.median, { showStars: false })}
+            ${ui.score(x.average, { showStars: false })}
           </button></li>`).join('')}</ul>` : '<p class="reh-empty">Nada parado. A banda está em dia!</p>'}
       </section>`;
   };
@@ -68,7 +68,7 @@ RH.views.rehearsals = (() => {
           <li><button type="button" class="reh-song" data-open="${esc(x.id)}">
             <span class="t">${esc(RH.SONGS[x.id].t)} ${ui.wantBadge(s.wanters(x.id).length, s.wants(x.id, me))}</span>
             <span class="s">${esc(RH.SONGS[x.id].a)}${s.inSetlist(x.id) ? ' · no set' : ''}</span>
-            ${ui.score(s.median(x.id), { showStars: false })}
+            ${ui.score(s.average(x.id), { showStars: false })}
           </button></li>`).join('')}</ol>
           <a class="link-btn" href="#/musicas/todas" data-sort-priority>Ver todas por prioridade</a>`
           : '<p class="reh-empty">Ninguém marcou “Quero tocar” ainda. Abra uma música e toque no coração.</p>'}
